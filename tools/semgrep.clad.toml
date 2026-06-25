@@ -1,0 +1,23 @@
+[tool]
+name = "semgrep"
+version = "1.0.0"
+binary = "codered"
+description = "Semgrep static analysis (auto-config rules; via Python scanner sidecar)"
+timeout_seconds = 300
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::StaticHunter"
+action = "execute_tool"
+
+[args.target_dir]
+position = 1
+required = true
+type = "file_path"
+
+[command]
+template = "codered hunt --tool semgrep --dir {target_dir}"
+
+[output]
+format = "json"
+envelope = true

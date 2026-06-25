@@ -1,0 +1,19 @@
+{
+  "name": "typescript-express-vuln",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Deliberately vulnerable Express + TypeScript fixture for Plan F multilang coverage tests.",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

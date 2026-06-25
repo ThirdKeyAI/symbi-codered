@@ -1,0 +1,38 @@
+// pattern_scout.symbi — the lawyer agent.
+//
+// Reads cartographer facts + static_hunter findings + taint chains, then
+// composes findings whose every claim cites a witness (Citation::Analyzer,
+// Citation::Code, or Citation::Hypothesis).
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// pattern_scout.rs — drives a CoderedOrga loop). The execute() stub
+// below is a placeholder for a future Symbiont-runtime migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Citation-gated reasoning over cartographer + static + taint outputs"
+}
+
+agent pattern_scout {
+    capabilities: [
+        query_threat_model,
+        query_findings,
+        query_taint_chains,
+        read_context,
+        read_context_range,
+        hypothesis_repl,
+        store_finding
+    ]
+
+    policy pattern_scout_authorization {
+        allow: execute_tool(Audit::PatternScout)
+        allow: store_finding(any)   // gated at the Cedar policy layer by citation.cedar
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

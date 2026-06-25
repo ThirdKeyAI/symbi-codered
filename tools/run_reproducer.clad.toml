@@ -1,0 +1,28 @@
+[tool]
+name = "run_reproducer"
+version = "1.0.0"
+binary = "codered"
+description = "poc_forge: ship a Python reproducer script to the sandbox; returns verdict (reproduced|refuted|unknown)"
+timeout_seconds = 60
+risk_tier = "medium"
+
+[tool.cedar]
+resource = "Audit::PocForge"
+action = "execute_tool"
+
+[args.script]
+position = 1
+required = true
+type = "string"
+
+[args.timeout_seconds]
+position = 2
+required = false
+type = "integer"
+
+[command]
+template = "codered run-reproducer --timeout {timeout_seconds}"
+
+[output]
+format = "json"
+envelope = true

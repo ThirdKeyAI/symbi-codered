@@ -1,0 +1,29 @@
+// reflector.symbi — cross-phase knowledge distillation.
+//
+// READ-ONLY on findings/chains; can ONLY write knowledge_triples.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// reflector.rs — drives a CoderedOrga loop, invoked at end of hunt).
+// The execute() stub below is a placeholder for a future Symbiont-runtime
+// migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "End-of-engagement reflector: distills findings + chains into reusable knowledge triples"
+}
+
+agent reflector {
+    capabilities: [query_findings, query_taint_chains, query_attack_chains, query_finding_detail, write_knowledge_triple]
+
+    policy reflector_authorization {
+        allow: execute_tool(Audit::Reflector)
+        allow: write_knowledge_triple(any)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

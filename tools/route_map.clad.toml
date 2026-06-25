@@ -1,0 +1,23 @@
+[tool]
+name = "route_map"
+version = "1.0.0"
+binary = "codered"
+description = "Extract HTTP routes from Python sources (Flask + FastAPI + Django basic)"
+timeout_seconds = 60
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[args.target_dir]
+position = 1
+required = true
+type = "file_path"
+
+[command]
+template = "codered tools route_map --dir {target_dir}"
+
+[output]
+format = "json"
+envelope = true

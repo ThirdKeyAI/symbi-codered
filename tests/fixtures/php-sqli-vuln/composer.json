@@ -1,0 +1,7 @@
+{
+    "name": "codered/php-sqli-vuln",
+    "description": "Deliberately vulnerable PHP fixture for codered e2e tests",
+    "require": {
+        "php": ">=8.1"
+    }
+}

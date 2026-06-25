@@ -1,0 +1,28 @@
+[tool]
+name = "mark_poc_status"
+version = "1.0.0"
+binary = "codered"
+description = "poc_forge: set findings.poc_status (reproduced|refuted|inconclusive|reproduced_by_citation). refuted (exploit ran and did NOT fire) downgrades status to hypothesis; inconclusive (reproducer could not run — compile/sandbox error or timeout) leaves the finding in play. A refuted label is refused if the last run_reproducer for the finding was an environmental failure."
+timeout_seconds = 5
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::PocForge"
+action = "mark_poc_status"
+
+[args.finding_id]
+position = 1
+required = true
+type = "string"
+
+[args.status]
+position = 2
+required = true
+type = "string"
+
+[command]
+template = "codered mark-poc-status --finding {finding_id} --status {status}"
+
+[output]
+format = "json"
+envelope = false

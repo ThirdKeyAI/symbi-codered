@@ -1,0 +1,33 @@
+[tool]
+name = "pin_threat_model"
+version = "1.0.0"
+binary = "codered"
+description = "Specifier: produce + sign the canonical threat model for an engagement (writes one row to threat_models)"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::Specifier"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[args.target_dir]
+position = 2
+required = true
+type = "file_path"
+
+[args.scope_file]
+position = 3
+required = false
+type = "file_path"
+
+[command]
+template = "codered specifier --engagement {engagement_id} --target {target_dir} --scope {scope_file}"
+
+[output]
+format = "json"
+envelope = true

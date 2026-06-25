@@ -1,0 +1,34 @@
+[tool]
+name = "recall_journal"
+version = "1.0.0"
+binary = "codered"
+description = "Semantic search over the hash-chained audit journal (episodic memory for agents)"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::Journal"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[args.query]
+position = 2
+required = true
+type = "string"
+
+[args.k]
+position = 3
+required = false
+type = "integer"
+default = 5
+
+[command]
+template = "codered tools recall_journal --engagement {engagement_id} --query {query} --k {k}"
+
+[output]
+format = "json"
+envelope = true

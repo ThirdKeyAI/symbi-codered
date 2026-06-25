@@ -1,0 +1,29 @@
+// audit-controller.symbi — engagement orchestrator capability declaration.
+//
+// EXECUTION NOTE: Orchestration is hand-rolled in
+// crates/symbi-codered-cli/src/commands/hunt.rs (sequential .await chain
+// through static_hunter → taint_tracer → pattern_scout → chain_builder →
+// poc_forge → devils_advocate → reflector). This .symbi file declares the
+// controller's capability surface for a future migration to Symbiont's
+// native agent runtime; today it is not loaded or executed as a Symbiont
+// agent. See agents/README pattern: same convention applies to every
+// .symbi file in this directory.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Engagement controller (orchestrates the 7-phase hunt pipeline)"
+}
+
+agent audit_controller {
+    capabilities: []
+
+    policy controller_authorization {
+        allow: orchestrate(engagement)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

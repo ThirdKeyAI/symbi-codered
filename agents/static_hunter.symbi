@@ -1,0 +1,27 @@
+// static_hunter.symbi — the witness/lawyer agent.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// static_hunter.rs — dispatches per-language scanner sidecars via
+// docker exec; Plan F added rust/typescript/go scanners). The execute()
+// stub below is a placeholder for a future Symbiont-runtime migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Runs static analyzers and writes citation-gated findings"
+}
+
+agent static_hunter {
+    capabilities: [semgrep, bandit, pip_audit, ruff_security, store_finding]
+
+    policy static_hunter_authorization {
+        allow: execute_tool(Audit::StaticHunter)
+        allow: store_finding(any)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

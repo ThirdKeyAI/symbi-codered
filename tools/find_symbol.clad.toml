@@ -1,0 +1,28 @@
+[tool]
+name = "find_symbol"
+version = "1.0.0"
+binary = "codered"
+description = "Look up function/class/method symbols by name in the symbol_index table"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[args.name]
+position = 2
+required = true
+type = "string"
+
+[command]
+template = "codered tools find_symbol --engagement {engagement_id} --name {name}"
+
+[output]
+format = "json"
+envelope = true

@@ -1,0 +1,25 @@
+// chain_builder.symbi — maps findings onto the seven-stage Agent Kill Chain.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// chain_builder.rs — drives a CoderedOrga loop). The execute() stub
+// below is a placeholder for a future Symbiont-runtime migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Builds attack_chains rows by mapping findings to kill-chain stages"
+}
+
+agent chain_builder {
+    capabilities: [query_findings, query_taint_chains, build_attack_chain]
+
+    policy chain_builder_authorization {
+        allow: execute_tool(Audit::ChainBuilder)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

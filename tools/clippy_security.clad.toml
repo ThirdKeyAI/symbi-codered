@@ -1,0 +1,23 @@
+[tool]
+name = "clippy_security"
+version = "1.0.0"
+binary = "codered"
+description = "Clippy with security-relevant lints (unwrap_used, indexing_slicing, suspicious, …) for Rust"
+timeout_seconds = 60
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::StaticHunter"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered clippy_security --engagement {engagement_id}"
+
+[output]
+format = "json"
+envelope = true

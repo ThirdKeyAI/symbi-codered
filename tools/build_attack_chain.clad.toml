@@ -1,0 +1,28 @@
+[tool]
+name = "build_attack_chain"
+version = "1.0.0"
+binary = "codered"
+description = "chain_builder: write one attack_chain row (stage + finding_ids) per coherent chain"
+timeout_seconds = 10
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::ChainBuilder"
+action = "execute_tool"
+
+[args.stage]
+position = 1
+required = true
+type = "string"
+
+[args.finding_ids]
+position = 2
+required = true
+type = "string"
+
+[command]
+template = "codered build-attack-chain --stage {stage} --finding-ids {finding_ids}"
+
+[output]
+format = "json"
+envelope = false

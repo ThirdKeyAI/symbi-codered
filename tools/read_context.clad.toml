@@ -1,0 +1,28 @@
+[tool]
+name = "read_context"
+version = "1.0.0"
+binary = "codered"
+description = "For a (file, line) pair, return imports + enclosing function/method"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[args.file_path]
+position = 1
+required = true
+type = "file_path"
+
+[args.line]
+position = 2
+required = true
+type = "integer"
+
+[command]
+template = "codered tools read_context --file {file_path} --line {line}"
+
+[output]
+format = "json"
+envelope = true

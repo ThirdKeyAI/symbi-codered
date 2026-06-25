@@ -1,0 +1,30 @@
+[tool]
+name = "repo_overview"
+version = "1.0.0"
+binary = "codered"
+description = "Detect languages, frameworks, package managers, and entrypoints from a repository tree"
+timeout_seconds = 60
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[tool.evidence]
+output_dir = "{evidence_dir}/{scan_id}-repo_overview"
+capture = true
+hash = "sha256"
+
+[args.target_dir]
+position = 1
+required = true
+type = "file_path"
+description = "Path to the target repository root"
+
+[command]
+template = "codered tools repo_overview --dir {target_dir}"
+
+[output]
+format = "json"
+parser = "builtin:json"
+envelope = true

@@ -1,0 +1,33 @@
+[tool]
+name = "read_context_range"
+version = "1.0.0"
+binary = "codered"
+description = "Read a line range from a file in the target repo (read-only). Sibling to read_context (which returns enclosing function); this slices [start..end] verbatim for pattern_scout citations."
+timeout_seconds = 5
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::PatternScout"
+action = "execute_tool"
+
+[args.file_path]
+position = 1
+required = true
+type = "file_path"
+
+[args.line_start]
+position = 2
+required = true
+type = "integer"
+
+[args.line_end]
+position = 3
+required = true
+type = "integer"
+
+[command]
+template = "codered read-context-range --file {file_path} --start {line_start} --end {line_end}"
+
+[output]
+format = "json"
+envelope = false

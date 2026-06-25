@@ -1,0 +1,42 @@
+[tool]
+name = "advocate_finding"
+version = "1.0.0"
+binary = "codered"
+description = "devils_advocate: set findings.advocate_verdict (confirmed|rebutted|uncertain). verdict=rebutted is witness-gated by advocate.cedar: it requires a non-empty reason AND a witness (envelope|sanitizer|closed_set|constant_caller), else the rebuttal is denied. confirmed/uncertain need neither (asymmetric cost)."
+timeout_seconds = 5
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::DevilsAdvocate"
+action = "advocate_finding"
+
+[args.finding_id]
+position = 1
+required = true
+type = "string"
+
+[args.verdict]
+position = 2
+required = true
+type = "string"
+
+[args.reason]
+position = 3
+required = false  # required + non-empty when verdict=rebutted (enforced in-executor)
+type = "string"
+
+# Required for verdict=rebutted: a JSON array of typed citations, e.g.
+# [{"type":"envelope","ref":"<read_context_range envelope id>"}]. Recognized
+# types: envelope|sanitizer|closed_set|constant_caller. Gated by advocate.cedar
+# via PolicyEngine::evaluate_with_attrs (not by toolclad). Optional otherwise.
+[args.witness]
+position = 4
+required = false
+type = "json"
+
+[command]
+template = "codered advocate-finding --finding {finding_id} --verdict {verdict} --reason {reason}"
+
+[output]
+format = "json"
+envelope = false

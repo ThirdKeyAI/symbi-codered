@@ -1,0 +1,27 @@
+// poc_forge.symbi — sandboxed minimal reproducer attempts.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// poc_forge.rs — drives a CoderedOrga loop, dispatches reproducer scripts
+// to per-language sandboxes). The execute() stub below is a placeholder
+// for a future Symbiont-runtime migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Synthesizes Python reproducer scripts; ships to sandbox; marks poc_status"
+}
+
+agent poc_forge {
+    capabilities: [query_findings, read_context_range, run_reproducer, mark_poc_status]
+
+    policy poc_forge_authorization {
+        allow: execute_tool(Audit::PocForge)
+        allow: mark_poc_status(any)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

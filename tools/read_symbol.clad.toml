@@ -1,0 +1,33 @@
+[tool]
+name = "read_symbol"
+version = "1.0.0"
+binary = "codered"
+description = "Return the source slice for a known symbol location"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[args.file_path]
+position = 1
+required = true
+type = "file_path"
+
+[args.line_start]
+position = 2
+required = true
+type = "integer"
+
+[args.line_end]
+position = 3
+required = true
+type = "integer"
+
+[command]
+template = "codered tools read_symbol --file {file_path} --line-start {line_start} --line-end {line_end}"
+
+[output]
+format = "json"
+envelope = true

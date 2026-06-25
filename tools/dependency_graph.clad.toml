@@ -1,0 +1,23 @@
+[tool]
+name = "dependency_graph"
+version = "1.0.0"
+binary = "codered"
+description = "Parse Python project files (requirements.txt / pyproject.toml / Pipfile / poetry.lock) into a normalized dependency graph"
+timeout_seconds = 60
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[args.target_dir]
+position = 1
+required = true
+type = "file_path"
+
+[command]
+template = "codered tools dependency_graph --dir {target_dir}"
+
+[output]
+format = "json"
+envelope = true

@@ -1,0 +1,27 @@
+# Custom ToolClad type definitions for symbi-codered.
+# Referenced from tools/*.clad.toml via `type = "type_name"`.
+
+[types.audit_language]
+base = "enum"
+allowed = ["python", "typescript", "rust", "go"]
+
+[types.cwe_id]
+base = "regex_match"
+pattern = "^CWE-\\d+$"
+
+[types.severity_level]
+base = "enum"
+allowed = ["info", "low", "medium", "high", "critical"]
+
+[types.confidence_level]
+base = "enum"
+allowed = ["low", "medium", "high"]
+
+[types.file_path]
+base = "regex_match"
+# Forbids `..` traversal and absolute paths
+pattern = "^[A-Za-z0-9_./\\-]+$"
+
+[types.semgrep_ruleset]
+base = "enum"
+allowed = ["auto", "security-audit", "secrets", "owasp-top-ten"]

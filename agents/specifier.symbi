@@ -1,0 +1,26 @@
+// specifier.symbi — the only place LLM free-form text is allowed.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// specifier.rs + crates/symbi-codered-cli/src/commands/specifier.rs).
+// The execute() stub below is a placeholder for a future Symbiont-runtime
+// migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Pins and signs the threat model for an engagement"
+}
+
+agent specifier {
+    capabilities: [pin_threat_model]
+
+    policy specifier_authorization {
+        allow: execute_tool(Audit::Specifier)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

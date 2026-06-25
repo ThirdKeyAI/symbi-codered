@@ -1,0 +1,17 @@
+{
+  "name": "repro",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "^4.21.0",
+    "axios": "^1.7.0",
+    "sqlite3": "^5.1.0",
+    "lodash": "^4.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "tsx": "^4.19.0",
+    "@types/express": "^4.17.0",
+    "@types/node": "^22.0.0"
+  }
+}

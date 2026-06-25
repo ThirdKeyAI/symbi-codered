@@ -1,0 +1,35 @@
+// cartographer.symbi — pure-fact phase agent.
+//
+// By design, the cartographer produces structured artifacts only. No LLM judgment.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-cli/src/commands/
+// carto.rs). The execute() stub below is a placeholder for a future
+// migration to Symbiont's native agent runtime.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Pure-fact phase: produces repo_facts, symbol_index, routes, code_chunk embeddings, journal embeddings"
+}
+
+agent cartographer {
+    capabilities: [repo_overview, dependency_graph, find_symbol, read_symbol, read_context, route_map, grep_semantic, recall_journal]
+
+    policy cartographer_authorization {
+        allow: execute_tool(Audit::RepoIntel)
+        allow: execute_tool(Audit::Journal)
+        allow: write(repo_facts)
+        allow: write(symbol_index)
+        allow: write(routes)
+        deny:  store_finding(any)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        // Plan B stub: orchestration body lives in the codered CLI's `carto`
+        // subcommand. This DSL declaration is what the Symbiont runtime
+        // registers as an agent.
+        return input;
+    }
+}

@@ -1,0 +1,23 @@
+[tool]
+name = "query_taint_chains"
+version = "1.0.0"
+binary = "codered"
+description = "Read taint chains for an engagement"
+timeout_seconds = 5
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::PatternScout"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered query-taint-chains --engagement {engagement_id}"
+
+[output]
+format = "json"
+envelope = false

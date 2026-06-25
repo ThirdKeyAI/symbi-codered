@@ -1,0 +1,30 @@
+// devils_advocate.symbi — inverted-prompt rebuttal pass.
+//
+// READ-ONLY on findings: can annotate advocate_verdict but cannot
+// store new findings. The forbid rule in tool-authorization.cedar
+// makes this structural.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// devils_advocate.rs — drives a CoderedOrga loop). The execute() stub
+// below is a placeholder for a future Symbiont-runtime migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Fresh-context inverted-prompt rebuttal pass over all engagement findings"
+}
+
+agent devils_advocate {
+    capabilities: [query_findings, advocate_finding]
+
+    policy devils_advocate_authorization {
+        allow: execute_tool(Audit::DevilsAdvocate)
+        allow: advocate_finding(any)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

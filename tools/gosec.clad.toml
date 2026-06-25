@@ -1,0 +1,23 @@
+[tool]
+name = "gosec"
+version = "1.0.0"
+binary = "codered"
+description = "gosec Go security checker (G1xx-G5xx rules) via Go scanner sidecar"
+timeout_seconds = 120
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::StaticHunter"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered gosec --engagement {engagement_id}"
+
+[output]
+format = "json"
+envelope = true

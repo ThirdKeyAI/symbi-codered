@@ -1,0 +1,33 @@
+[package]
+name        = "symbi-codered-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "codered CLI — entrypoint for the symbi-codered orchestrator"
+
+[[bin]]
+name = "codered"
+path = "src/main.rs"
+
+[dependencies]
+symbi-evidence-schema = { workspace = true }
+symbi-codered-core    = { workspace = true }
+symbi-codered-tools   = { workspace = true }
+rusqlite              = { workspace = true }
+serde                 = { workspace = true }
+serde_json            = { workspace = true }
+reqwest               = { version = "0.12", features = ["blocking", "json"] }
+clap                  = { workspace = true }
+anyhow                = { workspace = true }
+chrono                = { workspace = true }
+uuid                  = { workspace = true }
+tokio                 = { workspace = true }
+tracing               = { workspace = true }
+tracing-subscriber    = { workspace = true }
+walkdir               = "2"
+
+[dev-dependencies]
+tempfile  = "3"
+rusqlite  = { workspace = true }
+symbi-codered-core = { workspace = true }

@@ -1,0 +1,23 @@
+[tool]
+name = "cargo_audit"
+version = "1.0.0"
+binary = "codered"
+description = "cargo-audit (RustSec advisory DB) — Rust dependency vulnerabilities"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::StaticHunter"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered cargo_audit --engagement {engagement_id}"
+
+[output]
+format = "json"
+envelope = true

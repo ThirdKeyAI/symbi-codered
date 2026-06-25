@@ -1,0 +1,23 @@
+[tool]
+name = "staticcheck"
+version = "1.0.0"
+binary = "codered"
+description = "staticcheck (SA*/S* correctness lints) for Go via Go scanner sidecar"
+timeout_seconds = 120
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::StaticHunter"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered staticcheck --engagement {engagement_id}"
+
+[output]
+format = "json"
+envelope = true

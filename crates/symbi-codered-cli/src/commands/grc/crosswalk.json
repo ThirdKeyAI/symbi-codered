@@ -1,0 +1,26 @@
+{
+  "version": "2026-05-30",
+  "note": "CWE -> compliance control crosswalk for the codered->GRC bridge. Maps the CWE classes codered emits to control IDs in NIST 800-53 rev5, OWASP ASVS 4.0, SOC2 (Trust Services Criteria), and ISO/IEC 27001:2022 Annex A. Conservative and SME-curatable: a finding is evidence of a control DEFICIENCY (risk), never an attestation. Unmapped CWEs are logged by the bridge, never silently dropped.",
+  "map": {
+    "CWE-89":  { "title": "SQL Injection",                 "nist_800_53": ["SI-10", "SI-15"], "owasp_asvs": ["V5.3.4", "V5.3.5"], "soc2": ["CC6.1", "CC8.1"], "iso_27001": ["A.8.28", "A.8.26"] },
+    "CWE-78":  { "title": "OS Command Injection",          "nist_800_53": ["SI-10", "CM-7"],  "owasp_asvs": ["V5.3.8"],           "soc2": ["CC6.1", "CC6.8"], "iso_27001": ["A.8.28"] },
+    "CWE-22":  { "title": "Path Traversal",                "nist_800_53": ["AC-3", "SI-10"],  "owasp_asvs": ["V12.3.1", "V5.1.4"],"soc2": ["CC6.1"],          "iso_27001": ["A.8.28", "A.5.15"] },
+    "CWE-94":  { "title": "Code Injection",                "nist_800_53": ["SI-10", "CM-7"],  "owasp_asvs": ["V5.2.4"],           "soc2": ["CC6.1", "CC8.1"], "iso_27001": ["A.8.28"] },
+    "CWE-79":  { "title": "Cross-Site Scripting",          "nist_800_53": ["SI-10"],          "owasp_asvs": ["V5.3.3"],           "soc2": ["CC6.1"],          "iso_27001": ["A.8.28"] },
+    "CWE-74":  { "title": "Injection (generic)",           "nist_800_53": ["SI-10"],          "owasp_asvs": ["V5.2.1"],           "soc2": ["CC6.1"],          "iso_27001": ["A.8.28"] },
+    "CWE-285": { "title": "Improper Authorization",        "nist_800_53": ["AC-3", "AC-6"],   "owasp_asvs": ["V4.1.1", "V4.2.1"], "soc2": ["CC6.1", "CC6.3"], "iso_27001": ["A.5.15", "A.8.3"] },
+    "CWE-862": { "title": "Missing Authorization",         "nist_800_53": ["AC-3"],           "owasp_asvs": ["V4.1.1"],           "soc2": ["CC6.1", "CC6.3"], "iso_27001": ["A.5.15", "A.8.3"] },
+    "CWE-863": { "title": "Incorrect Authorization",       "nist_800_53": ["AC-3", "AC-6"],   "owasp_asvs": ["V4.1.3"],           "soc2": ["CC6.1", "CC6.3"], "iso_27001": ["A.5.15", "A.8.3"] },
+    "CWE-639": { "title": "Authorization Bypass (IDOR)",   "nist_800_53": ["AC-3", "AC-4"],   "owasp_asvs": ["V4.2.1"],           "soc2": ["CC6.1", "CC6.3"], "iso_27001": ["A.8.3", "A.5.15"] },
+    "CWE-918": { "title": "Server-Side Request Forgery",   "nist_800_53": ["SC-7", "SI-10"],  "owasp_asvs": ["V5.2.6", "V12.6.1"],"soc2": ["CC6.6"],          "iso_27001": ["A.8.23", "A.8.28"] },
+    "CWE-352": { "title": "Cross-Site Request Forgery",    "nist_800_53": ["SC-23", "AC-4"],  "owasp_asvs": ["V4.2.2"],           "soc2": ["CC6.1"],          "iso_27001": ["A.8.28"] },
+    "CWE-400": { "title": "Uncontrolled Resource Consumption","nist_800_53": ["SC-5"],        "owasp_asvs": ["V11.1.4"],          "soc2": ["A1.1", "CC7.2"],  "iso_27001": ["A.8.6"] },
+    "CWE-20":  { "title": "Improper Input Validation",     "nist_800_53": ["SI-10"],          "owasp_asvs": ["V5.1.3"],           "soc2": ["CC6.1"],          "iso_27001": ["A.8.28"] },
+    "CWE-295": { "title": "Improper Certificate Validation","nist_800_53": ["SC-8", "SC-23"], "owasp_asvs": ["V9.2.1"],           "soc2": ["CC6.7"],          "iso_27001": ["A.8.24", "A.5.14"] },
+    "CWE-200": { "title": "Sensitive Information Exposure", "nist_800_53": ["AC-3", "SC-8"],   "owasp_asvs": ["V8.1.1"],           "soc2": ["CC6.1", "CC6.7"], "iso_27001": ["A.8.3", "A.5.14"] },
+    "CWE-798": { "title": "Hard-coded Credentials",        "nist_800_53": ["IA-5"],           "owasp_asvs": ["V2.10.4", "V6.4.1"],"soc2": ["CC6.1"],          "iso_27001": ["A.5.17", "A.8.5"] },
+    "CWE-732": { "title": "Incorrect Permission Assignment","nist_800_53": ["AC-6", "AC-3"],  "owasp_asvs": ["V4.1.3"],           "soc2": ["CC6.1", "CC6.3"], "iso_27001": ["A.8.3"] },
+    "CWE-327": { "title": "Broken/Risky Crypto Algorithm", "nist_800_53": ["SC-13"],          "owasp_asvs": ["V6.2.1"],           "soc2": ["CC6.7"],          "iso_27001": ["A.8.24"] },
+    "CWE-502": { "title": "Deserialization of Untrusted Data","nist_800_53": ["SI-10"],       "owasp_asvs": ["V5.5.1"],           "soc2": ["CC6.1"],          "iso_27001": ["A.8.28"] }
+  }
+}

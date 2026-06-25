@@ -1,0 +1,7 @@
+[project]
+name = "flask-vuln-fixture"
+version = "0.1.0"
+dependencies = [
+    "flask>=3.0",
+    "sqlalchemy>=2.0",
+]

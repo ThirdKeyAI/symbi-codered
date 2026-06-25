@@ -1,0 +1,28 @@
+[tool]
+name = "hypothesis_repl"
+version = "1.0.0"
+binary = "codered"
+description = "Sub-context: prove or kill a hypothesis in a fresh ORGA loop"
+timeout_seconds = 120
+risk_tier = "medium"
+
+[tool.cedar]
+resource = "Audit::HypothesisRepl"
+action = "execute_tool"
+
+[args.hypothesis_text]
+position = 1
+required = true
+type = "string"
+
+[args.budget_iterations]
+position = 2
+required = false
+type = "integer"
+
+[command]
+template = "codered hypothesis-repl --hypothesis {hypothesis_text} --budget {budget_iterations}"
+
+[output]
+format = "json"
+envelope = true

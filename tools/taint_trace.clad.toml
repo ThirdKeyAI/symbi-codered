@@ -1,0 +1,23 @@
+[tool]
+name = "taint_trace"
+version = "1.0.0"
+binary = "codered"
+description = "taint_tracer: BFS over dataflow_edges, emits TaintChain rows for each source->sink path"
+timeout_seconds = 60
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::TaintTracer"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered taint --engagement {engagement_id}"
+
+[output]
+format = "json"
+envelope = true

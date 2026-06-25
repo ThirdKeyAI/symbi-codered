@@ -1,0 +1,57 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/symbi-evidence-schema",
+    "crates/symbi-codered-core",
+    "crates/symbi-codered-cli",
+    "crates/symbi-codered-tools",
+]
+
+[workspace.package]
+version       = "0.1.0"
+edition       = "2021"
+license       = "Apache-2.0"                # OSS core; enterprise crates override to LicenseRef-Proprietary
+publish       = false                       # do not publish to crates.io
+repository    = "https://github.com/thirdkeyai/symbi-codered"
+rust-version  = "1.75"
+
+[workspace.dependencies]
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+toml        = "0.8"
+thiserror   = "1"
+anyhow      = "1"
+sha2        = "0.10"
+uuid        = { version = "1", features = ["v4", "serde"] }
+chrono      = { version = "0.4", features = ["serde"] }
+rusqlite    = { version = "0.31", features = ["bundled"] }
+lancedb     = "0.26"
+arrow-array = "57"
+arrow-schema = "57"
+fastembed   = "4"
+cedar-policy = "4"
+tokio       = { version = "1", features = ["full"] }
+tracing     = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap        = { version = "4", features = ["derive"] }
+
+[workspace.dependencies.symbi-evidence-schema]
+path = "crates/symbi-evidence-schema"
+
+[workspace.dependencies.symbi-codered-core]
+path = "crates/symbi-codered-core"
+
+[workspace.dependencies.symbi-codered-tools]
+path = "crates/symbi-codered-tools"
+
+[workspace.dependencies.symbi-runtime]
+version = "1.16.0"   # from crates.io (was a ../symbiont path dep)
+# cloud-llm enables CloudInferenceProvider (Anthropic/OpenAI backends) needed
+# by Plan D's pattern_scout / chain_builder / hypothesis_repl agents. It
+# transitively pulls in http-input (axum + tower + jsonwebtoken).
+features = ["cloud-llm"]
+
+[profile.release]
+opt-level = 3
+lto       = "thin"
+strip     = "symbols"

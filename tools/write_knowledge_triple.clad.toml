@@ -1,0 +1,43 @@
+[tool]
+name = "write_knowledge_triple"
+version = "1.0.0"
+binary = "codered"
+description = "reflector: write one (subject, predicate, object) knowledge triple distilled from the engagement; future engagements can recall_knowledge_by_subject"
+timeout_seconds = 5
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::Reflector"
+action = "write_knowledge_triple"
+
+[args.subject]
+position = 1
+required = true
+type = "string"
+
+[args.predicate]
+position = 2
+required = true
+type = "string"
+
+[args.object]
+position = 3
+required = true
+type = "string"
+
+[args.confidence]
+position = 4
+required = false
+type = "number"
+
+[args.rationale]
+position = 5
+required = false
+type = "string"
+
+[command]
+template = "codered write-knowledge-triple --subject {subject} --predicate {predicate} --object {object} --confidence {confidence} --rationale {rationale}"
+
+[output]
+format = "json"
+envelope = false

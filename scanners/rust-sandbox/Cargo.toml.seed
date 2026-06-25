@@ -1,0 +1,16 @@
+[package]
+name = "repro"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+
+[[bin]]
+name = "repro"
+path = "src/main.rs"

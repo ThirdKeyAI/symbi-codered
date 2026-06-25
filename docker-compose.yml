@@ -1,0 +1,181 @@
+# Plan A: orchestrator-only stack. Scanner sidecars (python/ts/rust/go)
+# are added incrementally in Plans C-E.
+#
+# Required env (see .env.example):
+#   ANTHROPIC_API_KEY, SYMBIONT_MASTER_KEY, SYMBIONT_API_TOKEN
+
+services:
+  orchestrator:
+    image: symbi-codered-orchestrator:dev
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    environment:
+      ANTHROPIC_API_KEY:   ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is required}
+      SYMBIONT_MASTER_KEY: ${SYMBIONT_MASTER_KEY:?SYMBIONT_MASTER_KEY is required}
+      SYMBIONT_API_TOKEN:  ${SYMBIONT_API_TOKEN:?SYMBIONT_API_TOKEN is required}
+      SYMBI_LOG_LEVEL:     ${SYMBI_LOG_LEVEL:-info}
+    volumes:
+      - ./data:/opt/codered/data
+      - ./reports:/opt/codered/reports
+      - ./evidence:/opt/codered/evidence
+      - ./.symbiont/audit:/opt/codered/.symbiont/audit
+      # Target repo bind-mount; override per-audit via `docker compose run`
+      - ${CODERED_TARGET:-./}:/audit:ro
+    ports:
+      - "9080:9080"   # symbi REST API (used in Plan F)
+    # Plan A default: just print --help and exit. Override at run-time
+    # to drive an actual audit:
+    #   docker compose run --rm orchestrator audit /audit
+    command: ["--help"]
+
+  python-scanner:
+    image: symbi-codered-scanner-python:dev
+    build:
+      context: scanners/python
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-python
+    # Sidecar has NO network egress. It only sees the bind-mounted target repo.
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    # Stay alive so the host orchestrator can `docker exec` into us.
+    command: []
+    restart: unless-stopped
+
+  python-sandbox:
+    image: symbi-codered-sandbox-python:dev
+    build:
+      context: scanners/python-sandbox
+      dockerfile: Dockerfile
+    container_name: symbi-codered-sandbox-python
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  # Plan F language sidecars. Each mirrors python-scanner's posture: no
+  # network egress, read-only /repo bind-mount, stay alive so the host
+  # orchestrator can `docker exec` into it. npm-audit (typescript-scanner)
+  # would normally require registry network to refresh advisories; with
+  # network_mode=none it fails gracefully (scanner-runner returns ok=false
+  # with stderr) and static_hunter records a scanner_error. Egress policy
+  # for advisory refresh is deferred to a follow-up.
+  rust-scanner:
+    image: symbi-codered-scanner-rust:dev
+    build:
+      context: scanners/rust
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-rust
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  typescript-scanner:
+    image: symbi-codered-scanner-typescript:dev
+    build:
+      context: scanners/typescript
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-typescript
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  go-scanner:
+    image: symbi-codered-scanner-go:dev
+    build:
+      context: scanners/go
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-go
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  java-scanner:
+    image: symbi-codered-scanner-java:dev
+    build:
+      context: scanners/java
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-java
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  php-scanner:
+    image: symbi-codered-scanner-php:dev
+    build:
+      context: scanners/php
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-php
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  # IaC scanner sidecar (checkov + tfsec + trivy). Covers Terraform / K8s /
+  # Dockerfile / GitHub-Actions / Helm misconfig + secrets. checkov is pure
+  # Python (works fully offline); trivy's vuln DB is pre-warmed at image build,
+  # so with network_mode=none it still runs misconfig + secret detection.
+  # Selected by the cartographer when it detects an `iac` language.
+  iac-scanner:
+    image: symbi-codered-scanner-iac:dev
+    build:
+      context: scanners/iac
+      dockerfile: Dockerfile
+    container_name: symbi-codered-scanner-iac
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  # Plan F language sandboxes used by poc_forge `run_reproducer` calls.
+  # Same posture as python-sandbox: no network egress, read-only /repo
+  # bind-mount, stay alive so the host orchestrator can `docker exec` in.
+  # Each sidecar pre-seeds its language's package manager at build time so
+  # the runtime container does not need network access to run repros.
+  rust-sandbox:
+    image: symbi-codered-sandbox-rust:dev
+    build:
+      context: scanners/rust-sandbox
+      dockerfile: Dockerfile
+    container_name: symbi-codered-sandbox-rust
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  typescript-sandbox:
+    image: symbi-codered-sandbox-typescript:dev
+    build:
+      context: scanners/typescript-sandbox
+      dockerfile: Dockerfile
+    container_name: symbi-codered-sandbox-typescript
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
+
+  go-sandbox:
+    image: symbi-codered-sandbox-go:dev
+    build:
+      context: scanners/go-sandbox
+      dockerfile: Dockerfile
+    container_name: symbi-codered-sandbox-go
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped

@@ -1,0 +1,61 @@
+# =============================================================================
+# symbi.toml — runtime config for symbi-codered.
+#
+# Loaded by the symbi binary at orchestrator startup. Sandbox tier and
+# Cedar policy enforcement match symbi-redteam's posture (strict / docker).
+# =============================================================================
+
+[runtime]
+max_agents                = 9
+memory_limit_mb           = 1024
+execution_timeout_seconds = 1800   # 30 min per phase agent
+log_level                 = "info"
+evidence_dir              = "evidence"
+data_dir                  = "data"
+
+[security]
+default_sandbox_tier      = "docker"
+audit_enabled             = true
+policy_enforcement        = "strict"
+allow_native_execution    = false
+
+[security.capabilities]
+allowed = []                       # codered runs no privileged tools
+denied  = ["*"]
+
+[policy]
+policy_dir            = "policies"
+default_decision      = "deny"
+evaluation_timeout_ms = 5
+
+[audit]
+enabled            = true
+output_dir         = ".symbiont/audit"
+format             = "jsonl"
+hash_chain         = true
+include_tool_args  = true
+include_tool_output = false
+rotation           = "daily"
+
+[vector_db]
+enabled         = true
+backend         = "lancedb"
+collection_name = "codered_embeddings"
+
+[embeddings]
+provider = "local"                 # local | ollama | openai | voyage
+model    = "bge-small-en-v1.5"
+
+[mcp]
+server_port = 8943
+tools_dir   = "src"
+
+[toolclad]
+tools_dir     = "tools"
+custom_types  = "toolclad.toml"
+hot_reload    = false
+
+[agent]
+max_iterations = 15
+model          = "claude-sonnet-4-6-20260401"
+temperature    = 0.1

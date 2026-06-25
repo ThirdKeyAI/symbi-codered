@@ -1,0 +1,23 @@
+[tool]
+name = "compromised_packages"
+version = "1.0.0"
+binary = "codered"
+description = "jaschadub/compromised-packages-check — known-malicious package versions across npm / pypi / crates.io"
+timeout_seconds = 60
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::StaticHunter"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[command]
+template = "codered compromised_packages --engagement {engagement_id}"
+
+[output]
+format = "text"
+envelope = true

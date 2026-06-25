@@ -1,0 +1,22 @@
+/target
+**/*.rs.bk
+*.pdb
+
+# Local secrets and runtime state
+.env
+.env.local
+audit-logs/
+data/
+reports/
+evidence/
+.symbiont/audit/
+.symbiont/keys/
+.fastembed_cache/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store

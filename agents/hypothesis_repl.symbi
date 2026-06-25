@@ -1,0 +1,31 @@
+// hypothesis_repl.symbi — fresh-context prove-or-kill sub-agent.
+//
+// Spawned by pattern_scout when it needs to verify or refute a single,
+// well-scoped hypothesis without contaminating the parent reasoning trace.
+// The sub-agent runs in an isolated CoderedOrga loop and emits exactly one
+// verdict: REPRODUCED, REFUTED, or UNCERTAIN.
+//
+// EXECUTION NOTE: declarative-only. Capability surface + Cedar permits
+// here; execution lives in Rust (crates/symbi-codered-tools/src/
+// hypothesis_repl.rs — spun up by pattern_scout's executor). The
+// execute() stub below is a placeholder for a future Symbiont-runtime
+// migration.
+
+metadata {
+    version: "1.0.0",
+    author: "thirdkey-ai",
+    description: "Isolated sub-conversation that proves or kills a hypothesis"
+}
+
+agent hypothesis_repl {
+    capabilities: [read_context_range, query_findings]
+
+    policy hypothesis_repl_authorization {
+        allow: execute_tool(Audit::HypothesisRepl)
+        audit: all_operations
+    }
+
+    function execute(input: String) -> Result<String> {
+        return input;
+    }
+}

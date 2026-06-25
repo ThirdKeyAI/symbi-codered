@@ -1,0 +1,34 @@
+[tool]
+name = "grep_semantic"
+version = "1.0.0"
+binary = "codered"
+description = "Semantic search over indexed code chunks in LanceDB"
+timeout_seconds = 30
+risk_tier = "low"
+
+[tool.cedar]
+resource = "Audit::RepoIntel"
+action = "execute_tool"
+
+[args.engagement_id]
+position = 1
+required = true
+type = "string"
+
+[args.query]
+position = 2
+required = true
+type = "string"
+
+[args.k]
+position = 3
+required = false
+type = "integer"
+default = 5
+
+[command]
+template = "codered tools grep_semantic --engagement {engagement_id} --query {query} --k {k}"
+
+[output]
+format = "json"
+envelope = true
