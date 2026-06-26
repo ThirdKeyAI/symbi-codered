@@ -171,36 +171,6 @@ Followed by `codered report` (deterministic Rust; no LLM) which renders SARIF + 
 
 ---
 
-## Repository layout
-
-```
-symbi-codered/
-├── agents/                       # .symbi declarative agent capability surfaces (Cedar permits)
-├── crates/
-│   ├── symbi-codered-core/       # DB, policy engine, audit, signing, ORGA wrapper
-│   ├── symbi-codered-tools/      # cartographer + scanner parsers + 5 LLM agents + reporter
-│   ├── symbi-codered-web/        # (enterprise) web result viewer + client portal UI
-│   ├── symbi-codered-portal/     # (enterprise) client portal control plane
-│   └── symbi-codered-cli/        # `codered` binary (carto, specifier, hunt, advocate, report)
-├── crates/symbi-evidence-schema/ # Shared Finding/Citation/TaintChain/AttackChainNode types
-├── docker-compose.yml            # scanner + sandbox sidecars (6 scanners + 4 sandboxes)
-├── policies/                     # Cedar policies (.cedar files)
-├── scanners/{python,rust,typescript,go,java,php,iac,
-│            python-sandbox,rust-sandbox,
-│            typescript-sandbox,go-sandbox}/   # sidecar Dockerfiles + runners
-├── tests/
-│   ├── boot_test.sh              # end-to-end orchestrator smoke (gated by env vars)
-│   └── fixtures/{python-flask-vuln,
-│                 rust-axum-vuln,
-│                 typescript-express-vuln,
-│                 go-net-http-vuln,
-│                 java-servlet-vuln,
-│                 php-sqli-vuln}/   # Deliberate-vuln fixtures
-└── tools/                        # ToolClad manifests (.clad.toml — declare codered's tool surface)
-```
-
----
-
 ## Development
 
 ```bash
