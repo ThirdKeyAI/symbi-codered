@@ -1,0 +1,19 @@
+# .symbiont/local-policy.toml — hard deny list enforced by symbi runtime
+# BEFORE Cedar evaluation. These are guardrails that no policy file can
+# accidentally permit.
+
+[deny]
+exec_outside_toolclad   = true     # agents may only invoke registered ToolClad tools
+write_outside_scope     = true     # writes outside reports/, data/, evidence/, .symbiont/audit/ are blocked
+network_outside_allowlist = true   # outbound network only to explicitly allowed hosts
+modify_source_code      = true     # the target repo mount is read-only; this is a belt-and-braces
+
+[deny.paths]
+# Patterns forbidden under any circumstance, even with explicit Cedar permit.
+absolute = [
+    "/etc/**",
+    "/root/.ssh/**",
+    "/var/run/docker.sock",
+    "/proc/**",
+    "/sys/**",
+]
