@@ -167,6 +167,8 @@ UI, available as a separate enterprise offering. Contact ThirdKey for access.
 
 Followed by `codered report` (deterministic Rust; no LLM) which renders SARIF + Markdown + signed seed.
 
+**Taint, in context.** A *source* is where untrusted input enters (HTTP params, request bodies, CLI args, env, file reads); a *sink* is an operation that's dangerous with untrusted input (SQL query, shell exec, file path, deserializer, HTML output). The `taint_tracer` does a mechanical BFS over the cartographer's `dataflow_edges` from each source to each sink the specifier pinned — an unsanitized source→sink path becomes a `TaintChain` (SQLi, command injection, path traversal, SSRF, XSS, …). Those chains are the structural *witness* a finding must cite: reachability proof, not just a risky-looking code shape.
+
 ---
 
 ## Repository layout
@@ -181,7 +183,6 @@ symbi-codered/
 │   ├── symbi-codered-portal/     # (enterprise) client portal control plane
 │   └── symbi-codered-cli/        # `codered` binary (carto, specifier, hunt, advocate, report)
 ├── crates/symbi-evidence-schema/ # Shared Finding/Citation/TaintChain/AttackChainNode types
-├── db/schema.sql                 # SQLite schema (engagement-scoped tables)
 ├── docker-compose.yml            # scanner + sandbox sidecars (6 scanners + 4 sandboxes)
 ├── policies/                     # Cedar policies (.cedar files)
 ├── scanners/{python,rust,typescript,go,java,php,iac,

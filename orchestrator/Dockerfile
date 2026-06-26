@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /build
 COPY Cargo.toml Cargo.lock* ./
 COPY crates ./crates
-COPY db ./db
 
 # -j2 to match the global build-parallelism convention
 RUN cargo build --release -j2 --bin codered

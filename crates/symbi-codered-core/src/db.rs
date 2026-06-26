@@ -10,7 +10,7 @@ use symbi_evidence_schema::{
 };
 use uuid::Uuid;
 
-const SCHEMA_SQL: &str = include_str!("../../../db/schema.sql");
+const SCHEMA_SQL: &str = include_str!("schema.sql");
 
 #[derive(Debug, Error)]
 pub enum DbError {

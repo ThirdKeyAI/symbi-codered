@@ -4,7 +4,8 @@
 //! Each function returns a `serde_json::Value` that the ORGA executor will
 //! ship straight back to the agent (envelope = false in the manifests).
 //!
-//! Schema notes (adapted from the actual SQLite schema, db/schema.sql):
+//! Schema notes (adapted from the actual SQLite schema,
+//! crates/symbi-codered-core/src/schema.sql):
 //!   - `threat_models` column is `json` (not `canonical_json`)
 //!   - `taint_chains` columns are
 //!     `(id, engagement_id, source_file, source_line, sink_file, sink_line,
