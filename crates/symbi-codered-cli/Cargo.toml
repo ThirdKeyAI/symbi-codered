@@ -27,6 +27,13 @@ tracing               = { workspace = true }
 tracing-subscriber    = { workspace = true }
 walkdir               = "2"
 
+[features]
+# `portal` pulls in the enterprise web/portal crates and the `serve` command.
+# On by default for the private build; the OSS sync removes the optional deps
+# above, drops the `default` line, and reduces `portal` to an empty feature so
+# the `#[cfg(feature = "portal")]` gates compile out in the public engine+CLI build.
+portal = []
+
 [dev-dependencies]
 tempfile  = "3"
 rusqlite  = { workspace = true }
