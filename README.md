@@ -25,10 +25,10 @@ The full pipeline is implemented and tested: substrate, cartographer, citation-g
 | TypeScript / JavaScript | ✅ | ✅ | eslint, npm-audit, semgrep | ✅ |
 | Go | ✅ | ✅ | gosec, govulncheck, staticcheck | ✅ |
 | Java | ✅ | ✅ | semgrep, compromised-packages | ⏳ deferred |
-| PHP | ✅ | ✅ | semgrep, progpilot, compromised-packages | ⏳ deferred |
+| PHP | ✅ | ✅ | semgrep, progpilot, compromised-packages | ✅ |
 | IaC (Terraform / K8s / Dockerfile / GH-Actions) | n/a | n/a | checkov, trivy | n/a |
 
-Java and PHP each ship the full static path (tree-sitter parsing, dataflow extraction, taint, symbols, semgrep SAST; PHP also adds progpilot and compromised-packages); dedicated sandbox reproducers are the remaining gap for both, so their PoCs fall back to citation-grade evidence. The IaC sidecar (checkov + trivy) is wired into the cartographer's language detection and the static_hunter JOBS table (container `symbi-codered-scanner-iac`); its Dockerfile lives in `scanners/iac/`, though the service is not yet in the default `docker-compose.yml` — bring it up alongside the others to exercise it.
+Java and PHP each ship the full static path (tree-sitter parsing, dataflow extraction, taint, symbols, semgrep SAST; PHP also adds progpilot and compromised-packages). PHP also has a sandbox reproducer (PHP 8.3 CLI + pdo_sqlite); Java's dedicated sandbox reproducer is still deferred, so Java PoCs fall back to citation-grade evidence. The IaC sidecar (checkov + trivy) is wired into the cartographer's language detection and the static_hunter JOBS table (container `symbi-codered-scanner-iac`); its Dockerfile lives in `scanners/iac/`, though the service is not yet in the default `docker-compose.yml` — bring it up alongside the others to exercise it.
 
 **Recent hardening:** independent non-mirroring devils_advocate model (`--advocate-*` flags), witness-gated rebuttal (a finding can only be *suppressed* if the rebuttal cites a structural witness — symmetric with the witness gate on finding *creation*), and a third `poc_status = inconclusive` state so "the reproducer could not run" is no longer silently treated as a disproof.
 

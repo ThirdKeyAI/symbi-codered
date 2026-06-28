@@ -179,3 +179,15 @@ services:
       - ${CODERED_TARGET:-./}:/repo:ro
     command: []
     restart: unless-stopped
+
+  php-sandbox:
+    image: symbi-codered-sandbox-php:dev
+    build:
+      context: scanners/php-sandbox
+      dockerfile: Dockerfile
+    container_name: symbi-codered-sandbox-php
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped
