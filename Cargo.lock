@@ -7925,7 +7925,7 @@ dependencies = [
 
 [[package]]
 name = "symbi-codered-cli"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -7947,7 +7947,7 @@ dependencies = [
 
 [[package]]
 name = "symbi-codered-core"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "arrow-array",
@@ -7976,7 +7976,7 @@ dependencies = [
 
 [[package]]
 name = "symbi-codered-tools"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "arrow-array",
@@ -8038,7 +8038,7 @@ dependencies = [
 
 [[package]]
 name = "symbi-evidence-schema"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "chrono",
  "serde",
