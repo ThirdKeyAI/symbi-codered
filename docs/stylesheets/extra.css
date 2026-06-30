@@ -1,0 +1,17 @@
+/* Make mermaid diagrams full-width and readable */
+.mermaid svg {
+  max-width: 100% !important;
+}
+
+.mermaid {
+  overflow-x: auto;
+  text-align: center;
+}
+
+/* "Powered by Symbiont" footer line */
+.codered-powered-by {
+  text-align: center;
+  padding: 0.6rem 0;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
