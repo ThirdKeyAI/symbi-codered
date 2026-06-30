@@ -97,6 +97,8 @@ flowchart TD
 # Prereqs: docker, docker compose, rust toolchain, Anthropic API key.
 git clone <this-repo> && cd symbi-codered
 cp .env.example .env  # set ANTHROPIC_API_KEY (and SYMBIONT_*)
+# Other LLM providers (OpenAI / OpenRouter, or AWS Bedrock via an
+# OpenAI-compatible gateway) are configured in .env — see the comments there.
 
 # Build the CLI:
 cargo build -j2 -p symbi-codered-cli --release
@@ -217,7 +219,6 @@ Everything that touches a finding or a tool call is policy-gated and audited. Se
 - [`policies/tool-authorization.cedar`](policies/tool-authorization.cedar) — per-agent permits + the `devils-advocate-forbids-store` invariant
 - [`policies/advocate.cedar`](policies/advocate.cedar) — a `rebutted` advocate verdict requires a structural witness (suppression is witness-bound, symmetric with finding creation)
 - [`policies/handoff.cedar`](policies/handoff.cedar) — which findings are eligible for the redteam handoff (advocate-confirmed/uncertain, citation-bearing, severity ≥ medium, poc not refuted; `inconclusive` is **not** dropped — a non-test is not a disproof)
-- [`policies/portal.cedar`](policies/portal.cedar) — client-portal access: operators see all runs, clients see only runs for repos they're granted (fail-closed; unauthorized → 404)
 - [`policies/step-up.cedar`](policies/step-up.cedar) — actions requiring out-of-band approval
 - [`policies/phase-gates.cedar`](policies/phase-gates.cedar) — ordering constraints between stages
 - [`policies/reflector.cedar`](policies/reflector.cedar) — reflector's capability surface
