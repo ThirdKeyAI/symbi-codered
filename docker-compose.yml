@@ -191,3 +191,15 @@ services:
       - ${CODERED_TARGET:-./}:/repo:ro
     command: []
     restart: unless-stopped
+
+  java-sandbox:
+    image: symbi-codered-sandbox-java:dev
+    build:
+      context: scanners/java-sandbox
+      dockerfile: Dockerfile
+    container_name: symbi-codered-sandbox-java
+    network_mode: none
+    volumes:
+      - ${CODERED_TARGET:-./}:/repo:ro
+    command: []
+    restart: unless-stopped

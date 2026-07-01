@@ -6,13 +6,13 @@
 | Rust | ✅ | ✅ | cargo-audit, clippy, semgrep | ✅ |
 | TypeScript / JavaScript | ✅ | ✅ | eslint, npm-audit, semgrep | ✅ |
 | Go | ✅ | ✅ | gosec, govulncheck, staticcheck | ✅ |
-| Java | ✅ | ✅ | semgrep, compromised-packages | ⏳ deferred |
+| Java | ✅ | ✅ | semgrep, compromised-packages | ✅ |
 | PHP | ✅ | ✅ | semgrep, progpilot, compromised-packages | ✅ |
 | IaC (Terraform / K8s / Dockerfile / GH-Actions) | n/a | n/a | checkov, trivy | n/a |
 
-Java and PHP each ship the full static path (tree-sitter parsing, dataflow extraction, taint, symbols, semgrep SAST; PHP also adds progpilot and compromised-packages). PHP has a sandbox reproducer (PHP 8.3 CLI + pdo_sqlite); Java's dedicated sandbox reproducer is still deferred, so Java PoCs fall back to citation-grade evidence (`reproduced_by_citation`).
+Java and PHP each ship the full static path (tree-sitter parsing, dataflow extraction, taint, symbols, semgrep SAST; PHP also adds progpilot and compromised-packages) and a sandbox reproducer: PHP on PHP 8.3 CLI + pdo_sqlite, Java on JDK 21 single-file source mode (`java Repro.java`, no compile step) with sqlite-jdbc on the classpath for in-process SQLite repros.
 
-The IaC sidecar (checkov + trivy) is wired into the cartographer's language detection and the static_hunter JOBS table (container `symbi-codered-scanner-iac`); its Dockerfile lives in `scanners/iac/`. The service is not yet in the default `docker-compose.yml` — bring it up alongside the others to exercise it.
+The IaC sidecar (checkov + trivy) is wired into the cartographer's language detection and the static_hunter JOBS table (container `symbi-codered-scanner-iac`); its Dockerfile lives in `scanners/iac/` and the `iac-scanner` service ships in `docker-compose.yml` — bring it up alongside the others to exercise it.
 
 ## Adding a new scanner
 

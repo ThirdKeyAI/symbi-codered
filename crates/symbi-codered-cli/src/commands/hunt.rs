@@ -68,6 +68,10 @@ pub struct HuntArgs {
     #[arg(long, default_value = "symbi-codered-sandbox-php")]
     php_sandbox_container: String,
 
+    /// Name of the java-sandbox sidecar container.
+    #[arg(long, default_value = "symbi-codered-sandbox-java")]
+    java_sandbox_container: String,
+
     #[arg(long, default_value = "data/codered.db")]
     db: PathBuf,
 
@@ -341,6 +345,7 @@ async fn run_async(args: HuntArgs) -> Result<()> {
         typescript_sandbox_container: args.typescript_sandbox_container.clone(),
         go_sandbox_container: args.go_sandbox_container.clone(),
         php_sandbox_container: args.php_sandbox_container.clone(),
+        java_sandbox_container: args.java_sandbox_container.clone(),
     })
     .await
     .context("running poc_forge")?;

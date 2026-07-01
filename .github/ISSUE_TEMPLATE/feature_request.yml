@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an enhancement to the open-source core
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests for the analysis engine and CLI. The multi-tenant
+        client portal is a separate enterprise offering — contact ThirdKey for
+        that.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that codered doesn't support today?
+      placeholder: I want to audit <language> but there's no scanner/sandbox for it.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to see? A new scanner, language, policy, output format?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you've tried or other approaches you weighed.
+    validations:
+      required: false

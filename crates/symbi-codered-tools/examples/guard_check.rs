@@ -1,6 +1,8 @@
-//! Throwaway: re-run the mechanical taint stage on an existing engagement DB
-//! and print the guarded/unguarded split + per-language chain counts. $0, no
-//! LLM — the cheap codered revalidation loop (carto → specifier → this).
+//! Re-run the mechanical taint stage on an existing engagement DB and print the
+//! guarded/unguarded split + per-language chain counts. Costs $0 and calls no
+//! LLM — the cheap codered revalidation loop (carto → specifier → this), handy
+//! for tuning source/sink guards or checking a new language's dataflow coverage
+//! without paying for a full `hunt`.
 //!
 //! Usage:
 //!   cargo run -p symbi-codered-tools --example guard_check --release -- \

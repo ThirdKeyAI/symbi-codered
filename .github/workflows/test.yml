@@ -16,9 +16,6 @@ jobs:
       # own. Without this it fails with "google/protobuf/empty.proto: File not found".
       PROTOC_INCLUDE: /usr/include
     steps:
-      # Forgejo Actions mirrors common actions to data.forgejo.org but not
-      # every third-party action. Use full https://github.com/... URLs for
-      # the ones that aren't mirrored so the runner clones them from upstream.
       - uses: actions/checkout@v4
       # lance-encoding (transitive dep via lancedb) invokes protoc at build
       # time. The catthehacker/ubuntu:act-latest image doesn't ship it.
@@ -30,8 +27,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-      # Pinned to v2.7.8 (last release using node20). v2.8.0+ uses node24,
-      # which Forgejo act_runner v6.4.0 does not yet support.
       - uses: Swatinem/rust-cache@v2.7.8
       - name: clippy
         run: cargo clippy -j2 --workspace --all-targets -- -D warnings

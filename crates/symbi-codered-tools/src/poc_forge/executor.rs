@@ -55,6 +55,7 @@ fn infer_language(file_path: &str) -> Option<String> {
             "js" | "jsx" | "mjs" | "cjs" => "javascript",
             "go" => "go",
             "php" => "php",
+            "java" => "java",
             _ => return None,
         }
         .into(),
@@ -97,6 +98,8 @@ pub struct PocForgeExecutor {
     pub go_sandbox_container: String,
     /// PHP sandbox container name.
     pub php_sandbox_container: String,
+    /// Java sandbox container name.
+    pub java_sandbox_container: String,
     pub state: Mutex<PocForgeInner>,
 }
 
@@ -112,6 +115,7 @@ impl PocForgeExecutor {
         typescript_sandbox_container: String,
         go_sandbox_container: String,
         php_sandbox_container: String,
+        java_sandbox_container: String,
     ) -> Self {
         Self {
             engagement_id,
@@ -123,6 +127,7 @@ impl PocForgeExecutor {
             typescript_sandbox_container,
             go_sandbox_container,
             php_sandbox_container,
+            java_sandbox_container,
             state: Mutex::new(PocForgeInner::default()),
         }
     }
@@ -286,12 +291,13 @@ impl PocForgeExecutor {
             Some("typescript") | Some("javascript") => &self.typescript_sandbox_container,
             Some("go") => &self.go_sandbox_container,
             Some("php") => &self.php_sandbox_container,
+            Some("java") => &self.java_sandbox_container,
             Some(other) => {
                 return Observation::tool_error(
                     "run_reproducer",
                     format!(
                         "unsupported language {other:?}; expected one of \
-                         python|rust|typescript|javascript|go|php"
+                         python|rust|typescript|javascript|go|php|java"
                     ),
                 );
             }
@@ -752,6 +758,7 @@ mod tests {
             "typescript-sandbox".to_string(),
             "go-sandbox".to_string(),
             "php-sandbox".to_string(),
+            "java-sandbox".to_string(),
         );
         (dir, db_path, exec, eid)
     }
@@ -1174,6 +1181,7 @@ mod tests {
         assert_eq!(infer_language("a/b.cjs").as_deref(), Some("javascript"));
         assert_eq!(infer_language("a/b.go").as_deref(), Some("go"));
         assert_eq!(infer_language("a/b.php").as_deref(), Some("php"));
+        assert_eq!(infer_language("a/b.java").as_deref(), Some("java"));
         assert_eq!(infer_language("Makefile"), None);
         assert_eq!(infer_language("a/b.unknown"), None);
         // Case insensitive

@@ -2,7 +2,7 @@
 
 **Governed AI source-code auditor.** Multi-language SAST + LLM-driven reasoning + sandboxed PoC validation + devil's-advocate rebuttal, with an evidence chain you can audit.
 
-Produces SARIF + Markdown + a signed `engagement-seed.json` handoff that downstream consumers (e.g. [symbi-redteam](../symbi-redteam)) can ingest to drive exploit validation.
+Produces SARIF + Markdown + a signed `engagement-seed.json` handoff that downstream consumers (e.g. [symbi-redteam](https://github.com/ThirdKeyAI/symbi-redteam)) can ingest to drive exploit validation.
 
 ---
 
@@ -24,11 +24,11 @@ The full pipeline is implemented and tested: substrate, cartographer, citation-g
 | Rust | ✅ | ✅ | cargo-audit, clippy, semgrep | ✅ |
 | TypeScript / JavaScript | ✅ | ✅ | eslint, npm-audit, semgrep | ✅ |
 | Go | ✅ | ✅ | gosec, govulncheck, staticcheck | ✅ |
-| Java | ✅ | ✅ | semgrep, compromised-packages | ⏳ deferred |
+| Java | ✅ | ✅ | semgrep, compromised-packages | ✅ |
 | PHP | ✅ | ✅ | semgrep, progpilot, compromised-packages | ✅ |
 | IaC (Terraform / K8s / Dockerfile / GH-Actions) | n/a | n/a | checkov, trivy | n/a |
 
-Java and PHP each ship the full static path (tree-sitter parsing, dataflow extraction, taint, symbols, semgrep SAST; PHP also adds progpilot and compromised-packages). PHP also has a sandbox reproducer (PHP 8.3 CLI + pdo_sqlite); Java's dedicated sandbox reproducer is still deferred, so Java PoCs fall back to citation-grade evidence. The IaC sidecar (checkov + trivy) is wired into the cartographer's language detection and the static_hunter JOBS table (container `symbi-codered-scanner-iac`); its Dockerfile lives in `scanners/iac/`, though the service is not yet in the default `docker-compose.yml` — bring it up alongside the others to exercise it.
+Java and PHP each ship the full static path (tree-sitter parsing, dataflow extraction, taint, symbols, semgrep SAST; PHP also adds progpilot and compromised-packages) and a sandbox reproducer — PHP on PHP 8.3 CLI + pdo_sqlite, Java on JDK 21 single-file source mode (`java Repro.java`) with sqlite-jdbc on the classpath. The IaC sidecar (checkov + trivy) is wired into the cartographer's language detection and the static_hunter JOBS table (container `symbi-codered-scanner-iac`); its Dockerfile lives in `scanners/iac/` and the `iac-scanner` service ships in `docker-compose.yml` — bring it up alongside the others to exercise it.
 
 **Recent hardening:** independent non-mirroring devils_advocate model (`--advocate-*` flags), witness-gated rebuttal (a finding can only be *suppressed* if the rebuttal cites a structural witness — symmetric with the witness gate on finding *creation*), and a third `poc_status = inconclusive` state so "the reproducer could not run" is no longer silently treated as a disproof.
 
@@ -66,6 +66,8 @@ flowchart TD
     poc --> sb_rs["rust-sandbox"]
     poc --> sb_ts["typescript-sandbox"]
     poc --> sb_go["go-sandbox"]
+    poc --> sb_php["php-sandbox"]
+    poc --> sb_java["java-sandbox"]
 
     poc --> adv["8 — devils_advocate<br/>inverted-prompt rebuttal<br/>(LLM, witness-gated,<br/>optional non-mirroring model)"]
     adv --> refl["9 — reflector<br/>knowledge_triples<br/>(LLM)"]
@@ -95,7 +97,7 @@ flowchart TD
 
 ```bash
 # Prereqs: docker, docker compose, rust toolchain, Anthropic API key.
-git clone <this-repo> && cd symbi-codered
+git clone https://github.com/ThirdKeyAI/symbi-codered && cd symbi-codered
 cp .env.example .env  # set ANTHROPIC_API_KEY (and SYMBIONT_*)
 # Other LLM providers (OpenAI / OpenRouter, or AWS Bedrock via an
 # OpenAI-compatible gateway) are configured in .env — see the comments there.
@@ -105,8 +107,8 @@ cargo build -j2 -p symbi-codered-cli --release
 
 # Bring up the scanner sidecars (per-language; build on first up):
 CODERED_TARGET=/path/to/target/repo docker compose up -d \
-  python-scanner rust-scanner typescript-scanner go-scanner java-scanner php-scanner \
-  python-sandbox rust-sandbox typescript-sandbox go-sandbox
+  python-scanner rust-scanner typescript-scanner go-scanner java-scanner php-scanner iac-scanner \
+  python-sandbox rust-sandbox typescript-sandbox go-sandbox php-sandbox java-sandbox
 
 # Run the pipeline:
 ./target/release/codered carto /path/to/target/repo

@@ -31,6 +31,7 @@ flowchart TD
     poc --> sb_ts["typescript-sandbox"]
     poc --> sb_go["go-sandbox"]
     poc --> sb_php["php-sandbox"]
+    poc --> sb_java["java-sandbox"]
 
     poc --> adv["8 — devils_advocate<br/>inverted-prompt rebuttal<br/>(LLM, witness-gated,<br/>optional non-mirroring model)"]
     adv --> refl["9 — reflector<br/>knowledge_triples<br/>(LLM)"]

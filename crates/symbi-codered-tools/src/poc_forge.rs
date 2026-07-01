@@ -40,7 +40,7 @@ pub use executor::PocForgeExecutor;
 /// `run_reproducer` dispatches to the right container by either the
 /// LLM-supplied `language` arg or by inferring it from the finding's
 /// file extension (`.py` / `.rs` / `.ts` / `.tsx` / `.js` / `.jsx` /
-/// `.mjs` / `.cjs` / `.go` / `.php`).
+/// `.mjs` / `.cjs` / `.go` / `.php` / `.java`).
 pub struct PocInput {
     pub engagement_id: Uuid,
     pub db_path: PathBuf,
@@ -56,6 +56,8 @@ pub struct PocInput {
     pub go_sandbox_container: String,
     /// PHP sandbox container name.
     pub php_sandbox_container: String,
+    /// Java sandbox container name.
+    pub java_sandbox_container: String,
 }
 
 /// Counters reported back after the loop terminates.
@@ -99,6 +101,7 @@ pub async fn run(input: PocInput) -> Result<PocSummary> {
         input.typescript_sandbox_container,
         input.go_sandbox_container,
         input.php_sandbox_container,
+        input.java_sandbox_container,
     ));
     let executor_for_orga: Arc<dyn ActionExecutor> = executor.clone();
     let orga = CoderedOrga::new(executor_for_orga)
@@ -181,6 +184,9 @@ fn build_conversation(engagement_id: Uuid) -> Conversation {
          - go: go 1.24 with lib/pq pre-fetched.\n\
          - php: PHP 8.3 CLI with PDO + pdo_sqlite (stand up an in-process \
            SQLite DB for SQLi/RCE repros; no network).\n\
+         - java: JDK 21 single-file source mode (`java Repro.java`, no compile \
+           step) with sqlite-jdbc on the classpath for in-process SQLite \
+           repros; no network.\n\
          The `language` arg on run_reproducer routes the script to the right \
          sandbox. If omitted, language is inferred from the finding's file \
          extension. Always match the script's language to the finding's \
@@ -294,6 +300,7 @@ mod tests {
             typescript_sandbox_container: "typescript-sandbox".to_string(),
             go_sandbox_container: "go-sandbox".to_string(),
             php_sandbox_container: "php-sandbox".to_string(),
+            java_sandbox_container: "java-sandbox".to_string(),
         };
     }
 }

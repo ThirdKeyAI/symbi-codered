@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a defect in symbi-codered
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. For security-sensitive reports, please follow
+        SECURITY.md instead of opening a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+      placeholder: When I run `codered hunt ...`, I expected X but got Y.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, including which pipeline stage and language.
+      placeholder: |
+        1. `codered carto /path/to/repo`
+        2. `codered specifier --engagement <eid> --target /path/to/repo`
+        3. `codered hunt --engagement <eid>`
+        4. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: codered version
+      description: Output of `codered --version` (or the image tag).
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Rust version (`rustc --version`), Docker version, and target language(s).
+      placeholder: "Ubuntu 24.04, rustc 1.85.0, Docker 27.x, target: Python + TypeScript"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste any output. Re-run with `SYMBI_LOG_LEVEL=debug` if you can.
+      render: shell
