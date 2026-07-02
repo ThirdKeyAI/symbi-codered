@@ -124,6 +124,12 @@ impl CoderedOrga {
                 std::env::set_var("ANTHROPIC_MODEL", model);
             }
             "openrouter" => {
+                // Hide the competing keys so that if OPENROUTER_API_KEY is
+                // absent, from_env returns None (clean "no usable key" error +
+                // fallback skip) instead of silently falling through to
+                // Anthropic/OpenAI and constructing the wrong provider.
+                std::env::remove_var("OPENAI_API_KEY");
+                std::env::remove_var("ANTHROPIC_API_KEY");
                 std::env::set_var("OPENROUTER_MODEL", model);
             }
             "openai" => {
@@ -222,8 +228,8 @@ pub type FallbackTier<'a> = (&'a str, &'a str);
 /// reflector) run on. Single source of truth so mirror detection knows what the
 /// advocate must NOT mirror. Tier 0 is the generation reference.
 pub const GENERATION_CHAIN: &[FallbackTier<'static>] = &[
-    ("anthropic", "claude-opus-4-7"),
-    ("openrouter", "anthropic/claude-opus-4.7"),
+    ("anthropic", "claude-fable-5"),
+    ("openrouter", "anthropic/claude-opus-4.8"),
     ("anthropic", "claude-sonnet-4-6"),
 ];
 
@@ -256,7 +262,7 @@ pub fn mirroring_tiers(tiers: &[(String, String)]) -> Vec<usize> {
 /// `CloudInferenceProvider::from_env`'s order and documented defaults.
 pub(crate) fn detect_tier(get: impl Fn(&str) -> Option<String>) -> Option<(String, String)> {
     if get("OPENROUTER_API_KEY").is_some() {
-        let model = get("OPENROUTER_MODEL").unwrap_or_else(|| "anthropic/claude-sonnet-4".to_string());
+        let model = get("OPENROUTER_MODEL").unwrap_or_else(|| "anthropic/claude-sonnet-4-6".to_string());
         return Some(("openrouter".to_string(), model));
     }
     if get("OPENAI_API_KEY").is_some() {
@@ -264,7 +270,7 @@ pub(crate) fn detect_tier(get: impl Fn(&str) -> Option<String>) -> Option<(Strin
         return Some(("openai".to_string(), model));
     }
     if get("ANTHROPIC_API_KEY").is_some() {
-        let model = get("ANTHROPIC_MODEL").unwrap_or_else(|| "claude-sonnet-4-20250514".to_string());
+        let model = get("ANTHROPIC_MODEL").unwrap_or_else(|| "claude-sonnet-4-6".to_string());
         return Some(("anthropic".to_string(), model));
     }
     None
@@ -287,8 +293,8 @@ pub fn detect_env_default_tier() -> Option<(String, String)> {
 /// Typical chain for reasoning-heavy stages (pattern_scout / chain_builder
 /// / reflector):
 ///
-///   1. ("anthropic", "claude-opus-4-7")          — preferred, lowest latency
-///   2. ("openrouter", "anthropic/claude-opus-4.7") — Anthropic-overloaded path
+///   1. ("anthropic", "claude-fable-5")             — preferred, lowest latency
+///   2. ("openrouter", "anthropic/claude-opus-4.8") — Anthropic-overloaded path (different pool)
 ///   3. ("anthropic", "claude-sonnet-4-6")          — quality-degraded but always running
 ///
 /// The conversation is cloned per attempt so the next tier gets a fresh
@@ -473,12 +479,12 @@ mod tests {
     }
 
     #[test]
-    fn generation_chain_is_the_known_opus_first_chain() {
+    fn generation_chain_is_the_known_fable_first_chain() {
         assert_eq!(
             super::GENERATION_CHAIN,
             &[
-                ("anthropic", "claude-opus-4-7"),
-                ("openrouter", "anthropic/claude-opus-4.7"),
+                ("anthropic", "claude-fable-5"),
+                ("openrouter", "anthropic/claude-opus-4.8"),
                 ("anthropic", "claude-sonnet-4-6"),
             ]
         );
@@ -499,9 +505,9 @@ mod tests {
     fn mirroring_tiers_flags_only_generator_matches() {
         use super::mirroring_tiers;
         let chain = vec![
-            ("openai".to_string(), "gpt-4o".to_string()),                      // independent
-            ("openrouter".to_string(), "anthropic/claude-opus-4.7".to_string()),// MIRROR (alias)
-            ("anthropic".to_string(), "claude-opus-4-7".to_string()),          // MIRROR (direct)
+            ("openai".to_string(), "gpt-4o".to_string()),                       // independent
+            ("openrouter".to_string(), "anthropic/claude-fable-5".to_string()), // MIRROR (alias)
+            ("anthropic".to_string(), "claude-fable-5".to_string()),            // MIRROR (direct)
         ];
         assert_eq!(mirroring_tiers(&chain), vec![1, 2]);
 
@@ -531,7 +537,7 @@ mod tests {
         // Anthropic default model.
         assert_eq!(
             detect_tier(mk(&[("ANTHROPIC_API_KEY", "x")])),
-            Some(("anthropic".to_string(), "claude-sonnet-4-20250514".to_string()))
+            Some(("anthropic".to_string(), "claude-sonnet-4-6".to_string()))
         );
         // No key -> None.
         assert_eq!(detect_tier(mk(&[])), None);

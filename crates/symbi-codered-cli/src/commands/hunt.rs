@@ -435,14 +435,15 @@ async fn run_async(args: HuntArgs) -> Result<()> {
         + poc_summary.tokens_out
         + advocate_summary.tokens_out
         + reflect_summary.tokens_out;
-    // Anthropic Sonnet 4.6 list price (USD per million tokens) as of 2026-05.
-    // Operators can recompute downstream; this is a rough cost signal, not a bill.
-    const SONNET_IN_PER_MTOK: f64 = 3.0;
-    const SONNET_OUT_PER_MTOK: f64 = 15.0;
-    let est_cost = (total_in as f64) * SONNET_IN_PER_MTOK / 1_000_000.0
-        + (total_out as f64) * SONNET_OUT_PER_MTOK / 1_000_000.0;
+    // Anthropic Fable 5 list price (USD per million tokens) as of 2026-07 —
+    // generation runs on Fable 5. The advocate (gemini) and degraded Sonnet
+    // tiers are priced differently, so this is a rough cost signal, not a bill.
+    const FABLE5_IN_PER_MTOK: f64 = 10.0;
+    const FABLE5_OUT_PER_MTOK: f64 = 50.0;
+    let est_cost = (total_in as f64) * FABLE5_IN_PER_MTOK / 1_000_000.0
+        + (total_out as f64) * FABLE5_OUT_PER_MTOK / 1_000_000.0;
     println!();
-    println!("--- LLM token usage (Sonnet 4.6 list pricing) ---");
+    println!("--- LLM token usage (Fable 5 list pricing) ---");
     println!(
         "pattern_scout:   in={:>8}  out={:>6}  iters={}",
         scout_summary.tokens_in, scout_summary.tokens_out, scout_summary.iterations

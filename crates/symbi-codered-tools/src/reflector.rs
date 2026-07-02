@@ -76,7 +76,7 @@ pub async fn run(input: ReflectInput) -> Result<ReflectSummary> {
     let config = LoopConfig {
         tool_definitions: crate::tool_defs::reflector(),
         tool_choice: Some(symbi_runtime::reasoning::inference::ToolChoice::Any),
-        // Opus 4.7 rejects `temperature`; omit by setting 0.0.
+        // Fable 5 (like Opus) rejects `temperature`; omit by setting 0.0.
         temperature: 0.0,
         // 120K context window (see pattern_scout for rationale).
         context_token_budget: 120_000,
@@ -87,8 +87,8 @@ pub async fn run(input: ReflectInput) -> Result<ReflectSummary> {
     };
     let agent_id = AgentId::new();
 
-    // Reflector synthesizes cross-phase patterns. Anthropic Opus →
-    // OpenRouter Opus → Anthropic Sonnet.
+    // Reflector synthesizes cross-phase patterns. Anthropic Fable 5 →
+    // OpenRouter Opus 4.8 → Anthropic Sonnet 4.6.
     let result = symbi_codered_core::orga::run_with_fallback(
         executor_for_orga,
         agent_id,
@@ -97,7 +97,7 @@ pub async fn run(input: ReflectInput) -> Result<ReflectSummary> {
         symbi_codered_core::orga::GENERATION_CHAIN,
     )
     .await
-    .context("running reflector with Opus fallback chain")?;
+    .context("running reflector with the generation fallback chain")?;
     let mut s = executor.summary();
     s.tokens_in = result.total_usage.prompt_tokens;
     s.tokens_out = result.total_usage.completion_tokens;

@@ -90,24 +90,24 @@ pub async fn run(input: ScoutInput) -> Result<ScoutSummary> {
     // takes more iters than its prior "skim findings" behavior.
     //
     // tool_choice = Any forces the LLM to call a tool every turn. Without
-    // this, long system prompts let Opus respond with planning text on
+    // this, long system prompts let the model respond with planning text on
     // turn 1 and the loop terminates at iter 0. The agent terminates by
     // hitting max_iterations / max_total_tokens or by Cedar denying a
     // store_finding attempt; never by a stray "DONE" text response.
     let config = LoopConfig {
         tool_definitions: crate::tool_defs::pattern_scout(),
         tool_choice: Some(symbi_runtime::reasoning::inference::ToolChoice::Any),
-        // Opus 4.7 rejects `temperature` ("deprecated for this model"). The
-        // runtime's build_anthropic_body skips the field when temperature
-        // is 0.0; setting it here forces the omit path. Same for the
-        // OpenRouter fallback (which also targets Opus 4.7).
+        // Fable 5 (like Opus) rejects an explicit `temperature`. The runtime's
+        // build_anthropic_body skips the field when temperature is 0.0; setting
+        // it here forces the omit path. Applies to every tier in the chain.
         temperature: 0.0,
-        // Opus 4.7 has a 200K input window. The 32K default truncated the
-        // conversation almost every iteration on a real engagement, causing
-        // scout to lose earlier query results and re-read. 120K leaves
+        // Fable 5 has a large (≥1M) input window, but the runtime's context
+        // manager caps "claude" at 200K and the default budget is only 32K,
+        // which truncated the conversation almost every iteration on a real
+        // engagement (scout lost earlier query results and re-read). 120K leaves
         // headroom for the ~16K output + framing while retaining far more
-        // cross-file context. Cost scales with ACTUAL tokens, not the
-        // ceiling, so this only matters when the conversation genuinely grows.
+        // cross-file context. Cost scales with ACTUAL tokens, not the ceiling,
+        // so this only matters when the conversation genuinely grows.
         context_token_budget: 120_000,
         max_iterations: 100,
         max_total_tokens: 600_000,
@@ -116,10 +116,10 @@ pub async fn run(input: ScoutInput) -> Result<ScoutSummary> {
     };
     let agent_id = AgentId::new();
 
-    // Pattern_scout composes findings via cross-file reasoning — Opus
-    // first. Fall back chain: Anthropic Opus → OpenRouter Opus (different
+    // Pattern_scout composes findings via cross-file reasoning — Fable 5
+    // first. Fallback chain: Anthropic Fable 5 → OpenRouter Opus 4.8 (different
     // infrastructure pool when Anthropic-direct is overloaded) →
-    // Anthropic Sonnet (always-running degraded tier).
+    // Anthropic Sonnet 4.6 (always-running degraded tier).
     let result = symbi_codered_core::orga::run_with_fallback(
         executor_for_orga,
         agent_id,
@@ -128,7 +128,7 @@ pub async fn run(input: ScoutInput) -> Result<ScoutSummary> {
         symbi_codered_core::orga::GENERATION_CHAIN,
     )
     .await
-    .context("running pattern_scout with Opus fallback chain")?;
+    .context("running pattern_scout with the generation fallback chain")?;
     let mut s = executor.summary();
     s.tokens_in = result.total_usage.prompt_tokens;
     s.tokens_out = result.total_usage.completion_tokens;

@@ -83,7 +83,7 @@ pub async fn run(input: ChainInput) -> Result<ChainSummary> {
         tool_definitions: crate::tool_defs::chain_builder(),
         // Force tool_use every turn — chain_builder is iterate-until-done.
         tool_choice: Some(symbi_runtime::reasoning::inference::ToolChoice::Any),
-        // Opus 4.7 rejects `temperature`; omit by setting 0.0.
+        // Fable 5 (like Opus) rejects `temperature`; omit by setting 0.0.
         temperature: 0.0,
         // 120K context window (see pattern_scout for rationale).
         context_token_budget: 120_000,
@@ -95,7 +95,7 @@ pub async fn run(input: ChainInput) -> Result<ChainSummary> {
     let agent_id = AgentId::new();
 
     // Chain_builder stitches findings + taint chains into multi-hop
-    // attack narratives. Anthropic Opus → OpenRouter Opus → Sonnet.
+    // attack narratives. Anthropic Fable 5 → OpenRouter Opus 4.8 → Sonnet 4.6.
     let result = symbi_codered_core::orga::run_with_fallback(
         executor_for_orga,
         agent_id,
@@ -104,7 +104,7 @@ pub async fn run(input: ChainInput) -> Result<ChainSummary> {
         symbi_codered_core::orga::GENERATION_CHAIN,
     )
     .await
-    .context("running chain_builder with Opus fallback chain")?;
+    .context("running chain_builder with the generation fallback chain")?;
     let mut s = executor.summary();
     s.tokens_in = result.total_usage.prompt_tokens;
     s.tokens_out = result.total_usage.completion_tokens;

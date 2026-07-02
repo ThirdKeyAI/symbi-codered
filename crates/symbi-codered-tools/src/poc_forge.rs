@@ -110,6 +110,16 @@ pub async fn run(input: PocInput) -> Result<PocSummary> {
     let conversation = build_conversation(input.engagement_id);
     let config = LoopConfig {
         tool_definitions: crate::tool_defs::poc_forge(),
+        // tool_choice = Any forces a tool call every turn so the loop can't
+        // terminate on planning text before mark_poc_status / emit_source_proof
+        // is ever called (the "0 verdicts" failure mode).
+        tool_choice: Some(symbi_runtime::reasoning::inference::ToolChoice::Any),
+        // Fable 5 / Opus reject an explicit `temperature`; 0.0 hits the runtime's
+        // omit path and keeps adjudication deterministic.
+        temperature: 0.0,
+        // Match the generation stages' 120K budget so paginated query_findings /
+        // read_context_range don't hit context truncation at the 32K default.
+        context_token_budget: 120_000,
         max_iterations: 60,
         max_total_tokens: 400_000,
         timeout: std::time::Duration::from_secs(900),

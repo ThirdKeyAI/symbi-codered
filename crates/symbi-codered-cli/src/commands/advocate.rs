@@ -127,10 +127,13 @@ async fn run_async(args: AdvocateArgs) -> Result<()> {
     println!("tokens_in:           {}", summary.tokens_in);
     println!("tokens_out:          {}", summary.tokens_out);
 
-    const SONNET_IN_PER_MTOK: f64 = 3.0;
-    const SONNET_OUT_PER_MTOK: f64 = 15.0;
-    let est_cost = (summary.tokens_in as f64) * SONNET_IN_PER_MTOK / 1_000_000.0
-        + (summary.tokens_out as f64) * SONNET_OUT_PER_MTOK / 1_000_000.0;
+    // The advocate typically runs on an independent model (default
+    // gemini-2.5-pro); Fable 5 list pricing is used as a rough upper-bound
+    // signal, not a bill.
+    const FABLE5_IN_PER_MTOK: f64 = 10.0;
+    const FABLE5_OUT_PER_MTOK: f64 = 50.0;
+    let est_cost = (summary.tokens_in as f64) * FABLE5_IN_PER_MTOK / 1_000_000.0
+        + (summary.tokens_out as f64) * FABLE5_OUT_PER_MTOK / 1_000_000.0;
     println!("est_cost_usd:        ${est_cost:.4}");
 
     Ok(())

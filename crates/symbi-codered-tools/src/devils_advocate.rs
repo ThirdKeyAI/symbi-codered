@@ -117,6 +117,16 @@ pub async fn run(input: AdvocateInput) -> Result<AdvocateSummary> {
     let conversation = build_conversation(input.engagement_id, input.severity_min.as_deref());
     let config = LoopConfig {
         tool_definitions: crate::tool_defs::devils_advocate(),
+        // tool_choice = Any forces a tool call every turn so the advocate can't
+        // answer in prose and never call advocate_finding — the root cause of
+        // the observed "0 verdicts" behavior on less tool-compliant models.
+        tool_choice: Some(symbi_runtime::reasoning::inference::ToolChoice::Any),
+        // Fable 5 / Opus reject an explicit `temperature`; 0.0 hits the runtime's
+        // omit path. A stochastic skeptic is undesirable — keep it deterministic.
+        temperature: 0.0,
+        // Match the generation stages' 120K budget; the advocate reads findings +
+        // evidence and would truncate early at the 32K default.
+        context_token_budget: 120_000,
         max_iterations: input.max_iterations.unwrap_or(60),
         max_total_tokens: input.max_total_tokens.unwrap_or(400_000),
         timeout: std::time::Duration::from_secs(1500),

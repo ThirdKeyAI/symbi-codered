@@ -48,7 +48,7 @@ pub fn pattern_scout() -> Vec<ToolDefinition> {
                "line_end":{"type":"integer","minimum":1}
            },"required":["file_path","line_start","line_end"]})),
         td("hypothesis_repl",
-           "Spin up an isolated fresh-context sub-agent to prove or kill a hypothesis. Returns {verdict, transcript_envelope_id}.",
+           "Spin up an isolated fresh-context sub-agent that REASONS about one hypothesis from its text alone (no code/file access yet) and returns {verdict, transcript_envelope_id}. verdict ∈ reproduced|refuted|uncertain. budget_iterations bounds the sub-agent's turns.",
            json!({"type":"object","properties":{
                "hypothesis_text":{"type":"string"},
                "budget_iterations":{"type":"integer","minimum":1,"maximum":20,"default":5}

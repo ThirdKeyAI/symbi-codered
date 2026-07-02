@@ -16,12 +16,27 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `CONTRIBUTING.md`, issue templates, and a pull-request template.
 
 ### Changed
+- **Default LLM is now Fable 5.** The finding-generation chain leads with
+  `claude-fable-5` (→ OpenRouter Opus 4.8 overload path → Sonnet 4.6 degraded);
+  `detect_tier` env defaults refreshed to Sonnet 4.6; token-cost estimates
+  relabeled to Fable 5 list pricing.
+- **`poc_forge` and `devils_advocate` LoopConfig** now set `tool_choice: Any`,
+  `temperature: 0.0`, and a 120K context budget (previously inherited weaker
+  defaults) — fixes the "0 verdicts" prose-only termination, avoids a
+  `temperature` 400 on Fable 5/Opus, and stops early context truncation.
 - **OSS sync publishes only git-tracked files.** The public-mirror sync now
   enumerates git-tracked files per allowlisted directory instead of copying the
   tree as-is, so untracked/scratch content can no longer leak to the public repo.
 - Promoted `examples/guard_check.rs` from a throwaway to a tracked example.
 
 ### Fixed
+- **`hypothesis_repl` verdict is now a native `emit_verdict` tool-call** instead
+  of substring-matching free text — removes the negation-blind misparse
+  ("not refuted… reproduced" → refuted) that could corrupt hypothesis-grounded
+  findings, and wires the previously-ignored `budget_iterations`.
+- **`orga::with_provider_and_model` openrouter branch** now hides competing API
+  keys, so an OpenRouter tier with no OpenRouter key fails cleanly instead of
+  silently falling through to the wrong provider.
 - Documentation accuracy: the IaC sidecar ships in `docker-compose.yml` (was
   described as not-yet-included); corrected the `symbi-redteam` link and clone
   URL; added `php-sandbox`/`java-sandbox`/`iac-scanner` to the quick-start;
