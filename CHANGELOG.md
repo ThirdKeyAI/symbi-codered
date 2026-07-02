@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Selectable model profiles** — `codered hunt --model-profile <name>`
+  (`CODERED_MODEL_PROFILE` env) picks the generation model without recompiling:
+  `fable5` (default), `opus`, `sonnet`, or a local `ollama-qwen` example. Each
+  profile bundles its fallback chain + rough list pricing; the cost report and
+  advocate mirror-detection follow the selected profile. A fully custom chain
+  can be set via `CODERED_GENERATION_PROVIDER`/`_MODEL`/`_FALLBACK` (overrides
+  the preset). The universal optimizations (tool_choice, temperature, context
+  budget) stay on for every profile. Also added to the standalone `advocate`
+  command for correct mirror-detection.
 - **Java sandbox reproducer** — `poc_forge` now runs Java PoCs in a
   network-isolated JDK 21 sandbox using single-file source mode
   (`java Repro.java`, no compile step) with `sqlite-jdbc` on the classpath for

@@ -50,6 +50,12 @@ pub struct AdvocateArgs {
     #[arg(long)]
     advocate_fallback: Option<String>,
 
+    /// Generation model preset used for this engagement — the mirror-detection
+    /// reference: fable5 (default) | opus | sonnet | ollama-qwen. Also honors
+    /// CODERED_MODEL_PROFILE / CODERED_GENERATION_* env.
+    #[arg(long)]
+    model_profile: Option<String>,
+
     /// Lowest severity to adjudicate. The advocate skips anything ranked
     /// below this floor entirely. Values: critical, high, medium, low.
     /// Omitted = adjudicate all severities (default 60-iter budget will
@@ -86,6 +92,13 @@ async fn run_async(args: AdvocateArgs) -> Result<()> {
         .with_context(|| format!("engagement {} not found", args.engagement))?;
     drop(conn);
 
+    let generation = symbi_codered_core::orga::resolve_generation(args.model_profile.as_deref())?;
+    let gen_ref_model = generation
+        .chain
+        .first()
+        .map(|(_, m)| m.clone())
+        .unwrap_or_default();
+
     use crate::commands::advocate_model::{resolve_and_warn_advocate_chain, AdvModelInput};
     let model_chain = resolve_and_warn_advocate_chain(
         AdvModelInput {
@@ -98,6 +111,7 @@ async fn run_async(args: AdvocateArgs) -> Result<()> {
             model: std::env::var("CODERED_ADVOCATE_MODEL").ok(),
             fallback: std::env::var("CODERED_ADVOCATE_FALLBACK").ok(),
         },
+        &gen_ref_model,
     )?;
 
     let policy = Arc::new(
@@ -128,12 +142,10 @@ async fn run_async(args: AdvocateArgs) -> Result<()> {
     println!("tokens_out:          {}", summary.tokens_out);
 
     // The advocate typically runs on an independent model (default
-    // gemini-2.5-pro); Fable 5 list pricing is used as a rough upper-bound
-    // signal, not a bill.
-    const FABLE5_IN_PER_MTOK: f64 = 10.0;
-    const FABLE5_OUT_PER_MTOK: f64 = 50.0;
-    let est_cost = (summary.tokens_in as f64) * FABLE5_IN_PER_MTOK / 1_000_000.0
-        + (summary.tokens_out as f64) * FABLE5_OUT_PER_MTOK / 1_000_000.0;
+    // gemini-2.5-pro); the selected generation profile's list pricing is used
+    // as a rough upper-bound signal, not a bill.
+    let est_cost = (summary.tokens_in as f64) * generation.cost_in_per_mtok / 1_000_000.0
+        + (summary.tokens_out as f64) * generation.cost_out_per_mtok / 1_000_000.0;
     println!("est_cost_usd:        ${est_cost:.4}");
 
     Ok(())

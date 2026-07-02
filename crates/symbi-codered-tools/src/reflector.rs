@@ -36,6 +36,10 @@ pub struct ReflectInput {
     pub engagement_id: Uuid,
     pub db_path: PathBuf,
     pub journal_path: PathBuf,
+    /// Generation fallback chain (provider, model) from the selected
+    /// `--model-profile` / env override. Empty uses the default
+    /// [`GENERATION_CHAIN`](symbi_codered_core::orga::GENERATION_CHAIN).
+    pub generation_chain: Vec<(String, String)>,
 }
 
 /// Counters reported back after the loop terminates.
@@ -89,12 +93,22 @@ pub async fn run(input: ReflectInput) -> Result<ReflectSummary> {
 
     // Reflector synthesizes cross-phase patterns. Anthropic Fable 5 →
     // OpenRouter Opus 4.8 → Anthropic Sonnet 4.6.
+    let default_chain: Vec<(String, String)> = symbi_codered_core::orga::GENERATION_CHAIN
+        .iter()
+        .map(|(p, m)| (p.to_string(), m.to_string()))
+        .collect();
+    let chain_src = if input.generation_chain.is_empty() {
+        &default_chain
+    } else {
+        &input.generation_chain
+    };
+    let chain: Vec<(&str, &str)> = chain_src.iter().map(|(p, m)| (p.as_str(), m.as_str())).collect();
     let result = symbi_codered_core::orga::run_with_fallback(
         executor_for_orga,
         agent_id,
         conversation,
         config,
-        symbi_codered_core::orga::GENERATION_CHAIN,
+        &chain,
     )
     .await
     .context("running reflector with the generation fallback chain")?;
@@ -210,6 +224,7 @@ mod tests {
             engagement_id: Uuid::new_v4(),
             db_path: PathBuf::from("/tmp/codered.db"),
             journal_path: PathBuf::from("/tmp/codered.journal"),
+            generation_chain: Vec::new(),
         };
     }
 }

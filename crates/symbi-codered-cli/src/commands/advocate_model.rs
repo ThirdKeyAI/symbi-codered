@@ -97,17 +97,19 @@ pub fn resolve_advocate_chain(flags: AdvModelInput, env: AdvModelInput) -> Resul
 pub fn resolve_and_warn_advocate_chain(
     flags: AdvModelInput,
     env: AdvModelInput,
+    gen_model: &str,
 ) -> Result<Vec<(String, String)>> {
     let model_chain = resolve_advocate_chain(flags, env)?;
 
     // Mirror check: the run chain if configured, else the env-default tier (so
-    // the default, silently-mirroring advocate is still warned about).
+    // the default, silently-mirroring advocate is still warned about). Keyed off
+    // the actual generation model (the selected --model-profile), not a constant.
     let check: Vec<(String, String)> = if model_chain.is_empty() {
         symbi_codered_core::orga::detect_env_default_tier().into_iter().collect()
     } else {
         model_chain.clone()
     };
-    for idx in symbi_codered_core::orga::mirroring_tiers(&check) {
+    for idx in symbi_codered_core::orga::mirroring_tiers_for(gen_model, &check) {
         let (p, m) = &check[idx];
         if model_chain.is_empty() {
             tracing::warn!(

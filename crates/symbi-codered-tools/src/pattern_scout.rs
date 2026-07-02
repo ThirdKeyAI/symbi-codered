@@ -46,6 +46,10 @@ pub struct ScoutInput {
     pub journal_path: PathBuf,
     pub target_repo: PathBuf,
     pub policy: Arc<PolicyEngine>,
+    /// Generation fallback chain (provider, model) from the selected
+    /// `--model-profile` / env override. Empty uses the default
+    /// [`GENERATION_CHAIN`](symbi_codered_core::orga::GENERATION_CHAIN).
+    pub generation_chain: Vec<(String, String)>,
 }
 
 /// Counters reported back after the loop terminates.
@@ -120,12 +124,22 @@ pub async fn run(input: ScoutInput) -> Result<ScoutSummary> {
     // first. Fallback chain: Anthropic Fable 5 → OpenRouter Opus 4.8 (different
     // infrastructure pool when Anthropic-direct is overloaded) →
     // Anthropic Sonnet 4.6 (always-running degraded tier).
+    let default_chain: Vec<(String, String)> = symbi_codered_core::orga::GENERATION_CHAIN
+        .iter()
+        .map(|(p, m)| (p.to_string(), m.to_string()))
+        .collect();
+    let chain_src = if input.generation_chain.is_empty() {
+        &default_chain
+    } else {
+        &input.generation_chain
+    };
+    let chain: Vec<(&str, &str)> = chain_src.iter().map(|(p, m)| (p.as_str(), m.as_str())).collect();
     let result = symbi_codered_core::orga::run_with_fallback(
         executor_for_orga,
         agent_id,
         conversation,
         config,
-        symbi_codered_core::orga::GENERATION_CHAIN,
+        &chain,
     )
     .await
     .context("running pattern_scout with the generation fallback chain")?;
@@ -275,6 +289,7 @@ mod tests {
             journal_path: PathBuf::from("/tmp/codered.journal"),
             target_repo: PathBuf::from("/tmp/repo"),
             policy: stub_policy(),
+            generation_chain: Vec::new(),
         };
     }
 }

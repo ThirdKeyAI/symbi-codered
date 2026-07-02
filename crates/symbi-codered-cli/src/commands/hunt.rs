@@ -42,6 +42,14 @@ pub struct HuntArgs {
     #[arg(long)]
     target: Option<PathBuf>,
 
+    /// Generation model preset: fable5 (default) | opus | sonnet | ollama-qwen.
+    /// Also settable via CODERED_MODEL_PROFILE. For a fully custom chain, set
+    /// CODERED_GENERATION_PROVIDER + CODERED_GENERATION_MODEL (+ optional
+    /// CODERED_GENERATION_FALLBACK="provider:model,provider:model"), which
+    /// overrides the preset.
+    #[arg(long)]
+    model_profile: Option<String>,
+
     /// Name of the python-scanner sidecar container.
     #[arg(long, default_value = "symbi-codered-scanner-python")]
     scanner_container: String,
@@ -211,6 +219,27 @@ async fn run_async(args: HuntArgs) -> Result<()> {
     if let Some(p) = args.journal.parent() { std::fs::create_dir_all(p).ok(); }
     std::fs::create_dir_all(&args.evidence_dir).ok();
 
+    // Resolve the generation model (preset / env override) up front so a bad
+    // --model-profile fails immediately, not after the scanners have run. The
+    // three generation stages share this chain and the cost report uses its
+    // pricing.
+    let generation = symbi_codered_core::orga::resolve_generation(args.model_profile.as_deref())?;
+    tracing::info!(
+        "generation profile: {} — {}",
+        generation.label,
+        generation
+            .chain
+            .iter()
+            .map(|(p, m)| format!("{p}:{m}"))
+            .collect::<Vec<_>>()
+            .join(" → ")
+    );
+    let gen_ref_model = generation
+        .chain
+        .first()
+        .map(|(_, m)| m.clone())
+        .unwrap_or_default();
+
     let conn = db::init_db(args.db.to_str().unwrap())
         .with_context(|| format!("opening {}", args.db.display()))?;
     let _ = db::get_engagement(&conn, args.engagement)?
@@ -315,6 +344,7 @@ async fn run_async(args: HuntArgs) -> Result<()> {
         journal_path: args.journal.clone(),
         target_repo: effective_target.clone(),
         policy: policy.clone(),
+        generation_chain: generation.chain.clone(),
     };
     let scout_summary = pattern_scout::run(scout_input)
         .await
@@ -325,6 +355,7 @@ async fn run_async(args: HuntArgs) -> Result<()> {
         engagement_id: args.engagement,
         db_path: args.db.clone(),
         journal_path: args.journal.clone(),
+        generation_chain: generation.chain.clone(),
     };
     let chain_summary = chain_builder::run(chain_input)
         .await
@@ -366,6 +397,7 @@ async fn run_async(args: HuntArgs) -> Result<()> {
             model: std::env::var("CODERED_ADVOCATE_MODEL").ok(),
             fallback: std::env::var("CODERED_ADVOCATE_FALLBACK").ok(),
         },
+        &gen_ref_model,
     )?;
 
     let advocate_summary = devils_advocate::run(devils_advocate::AdvocateInput {
@@ -392,6 +424,7 @@ async fn run_async(args: HuntArgs) -> Result<()> {
         engagement_id: args.engagement,
         db_path: args.db.clone(),
         journal_path: args.journal.clone(),
+        generation_chain: generation.chain.clone(),
     })
     .await
     .unwrap_or_else(|e| {
@@ -435,15 +468,16 @@ async fn run_async(args: HuntArgs) -> Result<()> {
         + poc_summary.tokens_out
         + advocate_summary.tokens_out
         + reflect_summary.tokens_out;
-    // Anthropic Fable 5 list price (USD per million tokens) as of 2026-07 —
-    // generation runs on Fable 5. The advocate (gemini) and degraded Sonnet
-    // tiers are priced differently, so this is a rough cost signal, not a bill.
-    const FABLE5_IN_PER_MTOK: f64 = 10.0;
-    const FABLE5_OUT_PER_MTOK: f64 = 50.0;
-    let est_cost = (total_in as f64) * FABLE5_IN_PER_MTOK / 1_000_000.0
-        + (total_out as f64) * FABLE5_OUT_PER_MTOK / 1_000_000.0;
+    // List price (USD per million tokens) for the SELECTED generation profile.
+    // The advocate and degraded tiers are priced differently, so this is a
+    // rough cost signal, not a bill.
+    let est_cost = (total_in as f64) * generation.cost_in_per_mtok / 1_000_000.0
+        + (total_out as f64) * generation.cost_out_per_mtok / 1_000_000.0;
     println!();
-    println!("--- LLM token usage (Fable 5 list pricing) ---");
+    println!(
+        "--- LLM token usage ({} list pricing) ---",
+        generation.label
+    );
     println!(
         "pattern_scout:   in={:>8}  out={:>6}  iters={}",
         scout_summary.tokens_in, scout_summary.tokens_out, scout_summary.iterations

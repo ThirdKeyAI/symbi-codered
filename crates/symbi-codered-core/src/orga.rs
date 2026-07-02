@@ -233,6 +233,164 @@ pub const GENERATION_CHAIN: &[FallbackTier<'static>] = &[
     ("anthropic", "claude-sonnet-4-6"),
 ];
 
+/// A selectable generation-model preset. Bundles the genuinely model-varying
+/// knobs — the fallback chain and rough list pricing — so `codered hunt
+/// --model-profile <name>` can switch the whole generator without recompiling.
+/// The model-agnostic optimizations (tool_choice=Any, temperature omit, 120K
+/// context budget) stay on for every profile and are NOT gated here.
+pub struct ModelProfile {
+    pub name: &'static str,
+    /// Generation fallback chain; tier 0 is the generation reference used by
+    /// advocate mirror-detection.
+    pub chain: &'static [FallbackTier<'static>],
+    /// Rough USD-per-million-token list price, for the cost signal only.
+    pub cost_in_per_mtok: f64,
+    pub cost_out_per_mtok: f64,
+}
+
+/// Default: Fable 5 lead, OpenRouter Opus 4.8 overload path, Sonnet 4.6 degraded.
+pub const PROFILE_FABLE5: ModelProfile = ModelProfile {
+    name: "fable5",
+    chain: GENERATION_CHAIN,
+    cost_in_per_mtok: 10.0,
+    cost_out_per_mtok: 50.0,
+};
+
+/// Opus 4.8 lead — for the deepest cross-file reasoning at higher cost.
+pub const PROFILE_OPUS: ModelProfile = ModelProfile {
+    name: "opus",
+    chain: &[
+        ("anthropic", "claude-opus-4-8"),
+        ("openrouter", "anthropic/claude-opus-4.8"),
+        ("anthropic", "claude-sonnet-4-6"),
+    ],
+    cost_in_per_mtok: 15.0,
+    cost_out_per_mtok: 75.0,
+};
+
+/// Sonnet 4.6 lead — cheapest, for high-volume or budget-constrained runs.
+pub const PROFILE_SONNET: ModelProfile = ModelProfile {
+    name: "sonnet",
+    chain: &[
+        ("anthropic", "claude-sonnet-4-6"),
+        ("openrouter", "anthropic/claude-sonnet-4-6"),
+    ],
+    cost_in_per_mtok: 3.0,
+    cost_out_per_mtok: 15.0,
+};
+
+/// Example: a fully-local run against Ollama serving a Qwen coder model
+/// through its OpenAI-compatible API. No per-token cost. Requires:
+///   OPENAI_BASE_URL=http://<ollama-host>:11434/v1
+///   OPENAI_API_KEY=ollama            # any non-empty token; Ollama ignores it
+///   plus `ollama pull qwen2.5-coder:32b` (or edit the model below).
+/// Note: the runtime's OpenAI-path SSRF guard may reject private/link-local
+/// hosts — allowlist the Ollama host if the connection is refused.
+pub const PROFILE_OLLAMA_QWEN: ModelProfile = ModelProfile {
+    name: "ollama-qwen",
+    chain: &[("openai", "qwen2.5-coder:32b")],
+    cost_in_per_mtok: 0.0,
+    cost_out_per_mtok: 0.0,
+};
+
+/// All selectable profiles, in listing order. First entry is the default.
+pub const MODEL_PROFILES: &[&ModelProfile] =
+    &[&PROFILE_FABLE5, &PROFILE_OPUS, &PROFILE_SONNET, &PROFILE_OLLAMA_QWEN];
+
+/// The profile used when none is requested.
+pub const DEFAULT_PROFILE: &ModelProfile = &PROFILE_FABLE5;
+
+/// Resolve a profile by name (case-insensitive). `None` for an unknown name so
+/// the CLI can list the valid choices.
+pub fn profile_by_name(name: &str) -> Option<&'static ModelProfile> {
+    let n = name.trim().to_ascii_lowercase();
+    MODEL_PROFILES.iter().copied().find(|p| p.name == n)
+}
+
+/// Comma-separated list of valid profile names, for error messages.
+pub fn profile_names() -> String {
+    MODEL_PROFILES
+        .iter()
+        .map(|p| p.name)
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// The resolved generation config for a run: an owned (provider, model) chain
+/// plus its cost basis and a human label. Produced from a preset profile and/or
+/// the `CODERED_GENERATION_*` env override.
+pub struct ResolvedGeneration {
+    pub chain: Vec<(String, String)>,
+    pub cost_in_per_mtok: f64,
+    pub cost_out_per_mtok: f64,
+    pub label: String,
+}
+
+/// Parse a comma-separated `provider:model` tier list, e.g.
+/// `"openrouter:anthropic/claude-opus-4.8,anthropic:claude-sonnet-4-6"`.
+/// Splits each tier on its FIRST `:` so model names may contain colons
+/// (e.g. Ollama's `qwen2.5-coder:32b`). Malformed tiers are skipped.
+pub fn parse_tiers(s: &str) -> Vec<(String, String)> {
+    s.split(',')
+        .filter_map(|t| {
+            let (p, m) = t.trim().split_once(':')?;
+            if p.is_empty() || m.is_empty() {
+                return None;
+            }
+            Some((p.to_string(), m.to_string()))
+        })
+        .collect()
+}
+
+/// Resolve the generation model config. Precedence (highest first):
+///   1. `CODERED_GENERATION_PROVIDER` + `CODERED_GENERATION_MODEL`
+///      (+ optional `CODERED_GENERATION_FALLBACK`) → a custom chain, priced
+///      against the named/default preset as a rough basis.
+///   2. `profile_flag` (e.g. from `--model-profile`).
+///   3. `CODERED_MODEL_PROFILE` env.
+///   4. [`DEFAULT_PROFILE`].
+///
+/// Returns `Err` (with the valid names) if the requested profile is unknown.
+pub fn resolve_generation(profile_flag: Option<&str>) -> Result<ResolvedGeneration> {
+    let name = profile_flag
+        .map(str::to_string)
+        .or_else(|| std::env::var("CODERED_MODEL_PROFILE").ok())
+        .unwrap_or_else(|| DEFAULT_PROFILE.name.to_string());
+    let profile = profile_by_name(&name).ok_or_else(|| {
+        anyhow!("unknown model profile {name:?}; valid: {}", profile_names())
+    })?;
+
+    // Raw env override replaces the chain; the preset's price is kept as the
+    // rough cost basis (a custom model's true price is unknown here).
+    let gen_provider = std::env::var("CODERED_GENERATION_PROVIDER").ok();
+    let gen_model = std::env::var("CODERED_GENERATION_MODEL").ok();
+    if let (Some(p), Some(m)) = (gen_provider.as_deref(), gen_model.as_deref()) {
+        if !p.is_empty() && !m.is_empty() {
+            let mut chain = vec![(p.to_string(), m.to_string())];
+            if let Ok(fb) = std::env::var("CODERED_GENERATION_FALLBACK") {
+                chain.extend(parse_tiers(&fb));
+            }
+            return Ok(ResolvedGeneration {
+                chain,
+                cost_in_per_mtok: profile.cost_in_per_mtok,
+                cost_out_per_mtok: profile.cost_out_per_mtok,
+                label: format!("custom:{p}:{m}"),
+            });
+        }
+    }
+
+    Ok(ResolvedGeneration {
+        chain: profile
+            .chain
+            .iter()
+            .map(|(p, m)| (p.to_string(), m.to_string()))
+            .collect(),
+        cost_in_per_mtok: profile.cost_in_per_mtok,
+        cost_out_per_mtok: profile.cost_out_per_mtok,
+        label: profile.name.to_string(),
+    })
+}
+
 /// Provider-independent model identity, so aliases collapse to one family:
 /// drops a routing prefix (`anthropic/claude-opus-4.7` -> `claude-opus-4.7`)
 /// and normalizes version punctuation (`.` -> `-`), lowercased. Used only for
@@ -248,7 +406,14 @@ pub fn canonical_model_id(model: &str) -> String {
 /// reference (`GENERATION_CHAIN[0]`). A non-empty result means the advocate
 /// would partly mirror the generator — the caller warns but never blocks.
 pub fn mirroring_tiers(tiers: &[(String, String)]) -> Vec<usize> {
-    let gen = canonical_model_id(GENERATION_CHAIN[0].1);
+    mirroring_tiers_for(GENERATION_CHAIN[0].1, tiers)
+}
+
+/// Like [`mirroring_tiers`] but against an explicit generation reference model,
+/// so mirror-detection tracks the selected `--model-profile` rather than the
+/// hardcoded default.
+pub fn mirroring_tiers_for(gen_model: &str, tiers: &[(String, String)]) -> Vec<usize> {
+    let gen = canonical_model_id(gen_model);
     tiers
         .iter()
         .enumerate()
@@ -541,5 +706,85 @@ mod tests {
         );
         // No key -> None.
         assert_eq!(detect_tier(mk(&[])), None);
+    }
+
+    #[test]
+    fn profile_lookup_and_defaults() {
+        use super::{profile_by_name, DEFAULT_PROFILE, PROFILE_FABLE5};
+        assert_eq!(profile_by_name("fable5").unwrap().name, "fable5");
+        assert_eq!(profile_by_name("OPUS").unwrap().name, "opus"); // case-insensitive
+        assert_eq!(profile_by_name(" sonnet ").unwrap().name, "sonnet"); // trimmed
+        assert_eq!(profile_by_name("ollama-qwen").unwrap().name, "ollama-qwen");
+        assert!(profile_by_name("gpt7").is_none());
+        assert_eq!(DEFAULT_PROFILE.name, "fable5");
+        // The default profile's chain IS the generation chain.
+        assert_eq!(PROFILE_FABLE5.chain, super::GENERATION_CHAIN);
+    }
+
+    #[test]
+    fn mirroring_tiers_for_uses_explicit_reference() {
+        use super::mirroring_tiers_for;
+        let chain = vec![
+            ("openai".to_string(), "gpt-4o".to_string()),
+            ("anthropic".to_string(), "claude-opus-4-8".to_string()),
+        ];
+        // Against an opus generator, the opus tier mirrors; gpt does not.
+        assert_eq!(mirroring_tiers_for("claude-opus-4-8", &chain), vec![1]);
+        // Against a fable-5 generator, nothing in this chain mirrors.
+        assert!(mirroring_tiers_for("claude-fable-5", &chain).is_empty());
+    }
+
+    #[test]
+    fn parse_tiers_splits_on_first_colon() {
+        use super::parse_tiers;
+        // Ollama-style model names contain a colon — must split on the first only.
+        assert_eq!(
+            parse_tiers("openai:qwen2.5-coder:32b,anthropic:claude-sonnet-4-6"),
+            vec![
+                ("openai".to_string(), "qwen2.5-coder:32b".to_string()),
+                ("anthropic".to_string(), "claude-sonnet-4-6".to_string()),
+            ]
+        );
+        // Malformed tiers are skipped.
+        assert!(parse_tiers("garbage, ,").is_empty());
+    }
+
+    #[test]
+    fn resolve_generation_defaults_to_fable5() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let keys = [
+            "CODERED_MODEL_PROFILE",
+            "CODERED_GENERATION_PROVIDER",
+            "CODERED_GENERATION_MODEL",
+            "CODERED_GENERATION_FALLBACK",
+        ];
+        let saved: Vec<(&str, Option<String>)> =
+            keys.iter().map(|k| (*k, std::env::var(k).ok())).collect();
+        for (k, _) in &saved {
+            std::env::remove_var(k);
+        }
+
+        let default = super::resolve_generation(None).unwrap();
+        let opus = super::resolve_generation(Some("opus")).unwrap();
+        let unknown = super::resolve_generation(Some("nope"));
+
+        // Env override takes precedence over the preset when set.
+        std::env::set_var("CODERED_GENERATION_PROVIDER", "openai");
+        std::env::set_var("CODERED_GENERATION_MODEL", "qwen2.5-coder:32b");
+        let custom = super::resolve_generation(Some("opus")).unwrap();
+
+        for (k, v) in saved {
+            match v {
+                Some(val) => std::env::set_var(k, val),
+                None => std::env::remove_var(k),
+            }
+        }
+
+        assert_eq!(default.label, "fable5");
+        assert_eq!(default.chain[0].1, "claude-fable-5");
+        assert_eq!(opus.chain[0].1, "claude-opus-4-8");
+        assert!(unknown.is_err());
+        assert_eq!(custom.label, "custom:openai:qwen2.5-coder:32b");
+        assert_eq!(custom.chain[0], ("openai".to_string(), "qwen2.5-coder:32b".to_string()));
     }
 }
