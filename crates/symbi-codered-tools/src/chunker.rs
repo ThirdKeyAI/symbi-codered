@@ -34,9 +34,6 @@ pub struct Chunk {
     pub text: String,
 }
 
-const IGNORED_DIRS: &[&str] = &[
-    ".git", "target", "node_modules", "__pycache__", ".venv", "venv",
-];
 
 const MAX_CHUNK_BYTES: usize = 4096;
 
@@ -44,7 +41,7 @@ pub fn chunk_repo(root: &Path) -> Result<Vec<Chunk>, ChunkerError> {
     let mut chunks = Vec::new();
     for entry in WalkDir::new(root)
         .into_iter()
-        .filter_entry(|e| !is_ignored(e.path()))
+        .filter_entry(|e| !crate::walk::is_ignored_dir(e.path()))
     {
         let entry = entry?;
         if !entry.file_type().is_file() {
@@ -142,12 +139,6 @@ fn truncate(s: String) -> String {
     t
 }
 
-fn is_ignored(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|n| n.to_str())
-        .map(|n| IGNORED_DIRS.contains(&n))
-        .unwrap_or(false)
-}
 
 #[cfg(test)]
 mod tests {

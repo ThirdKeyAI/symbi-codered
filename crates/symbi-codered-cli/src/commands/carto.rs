@@ -92,7 +92,11 @@ pub fn run(args: CartoArgs) -> Result<()> {
     // 3) symbol_index + dataflow_edges (Python)
     let mut sym_count = 0_usize;
     let mut n_edges = 0_usize;
-    for entry in WalkDir::new(&args.target).into_iter().filter_map(|r| r.ok()) {
+    for entry in WalkDir::new(&args.target)
+        .into_iter()
+        .filter_entry(|e| !symbi_codered_tools::walk::is_ignored_dir(e.path()))
+        .filter_map(|r| r.ok())
+    {
         if !entry.file_type().is_file() { continue; }
         let path = entry.path();
         let rel = path.strip_prefix(&args.target).unwrap_or(path);

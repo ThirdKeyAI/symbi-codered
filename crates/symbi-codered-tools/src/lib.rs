@@ -8,6 +8,7 @@
 //! No tool in this crate exercises LLM judgment — that's by design.
 
 pub mod tree_sitter_loader;
+pub mod walk;
 pub mod repo_overview;
 pub mod repo_git_meta;
 pub mod dependency_graph;

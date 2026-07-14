@@ -25,10 +25,6 @@ pub struct RepoOverview {
     pub entrypoints: BTreeSet<String>,
 }
 
-const IGNORED_DIRS: &[&str] = &[
-    ".git", "target", "node_modules", "__pycache__", ".venv", "venv",
-    "dist", "build", ".tox", ".mypy_cache", ".pytest_cache",
-];
 
 /// Walk `root` and detect overview facts. Skips common build/dep dirs.
 pub fn analyze(root: &Path) -> Result<RepoOverview, RepoOverviewError> {
@@ -41,7 +37,7 @@ pub fn analyze(root: &Path) -> Result<RepoOverview, RepoOverviewError> {
 
     for entry in WalkDir::new(root)
         .into_iter()
-        .filter_entry(|e| !is_ignored(e.path()))
+        .filter_entry(|e| !crate::walk::is_ignored_dir(e.path()))
     {
         let entry = entry?;
         if !entry.file_type().is_file() {
@@ -214,12 +210,6 @@ fn is_iac_path(rel: &Path) -> bool {
     false
 }
 
-fn is_ignored(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|n| n.to_str())
-        .map(|n| IGNORED_DIRS.contains(&n))
-        .unwrap_or(false)
-}
 
 #[cfg(test)]
 mod tests {
