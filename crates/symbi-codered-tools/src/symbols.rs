@@ -55,8 +55,19 @@ pub fn extract_symbols(path: &Path) -> Result<Vec<Symbol>, SymbolError> {
             let tree = parse(lang, &source)?;
             walk_php_symbols(tree.root_node(), &source, &mut out);
         }
-        // Other languages: dataflow edges are extracted, but function-span
-        // symbols are not indexed yet.
+        SupportedLanguage::Rust => {
+            let tree = parse(lang, &source)?;
+            walk_rust_symbols(tree.root_node(), &source, &mut out);
+        }
+        SupportedLanguage::TypeScript | SupportedLanguage::Tsx => {
+            let tree = parse(lang, &source)?;
+            walk_ts_symbols(tree.root_node(), &source, &mut out, "typescript");
+        }
+        SupportedLanguage::JavaScript => {
+            let tree = parse(lang, &source)?;
+            walk_ts_symbols(tree.root_node(), &source, &mut out, "javascript");
+        }
+        // Remaining languages (config/markup): no function-span symbols.
         _ => {}
     }
     Ok(out)
@@ -149,6 +160,65 @@ fn walk_php_symbols(node: Node, source: &[u8], out: &mut Vec<Symbol>) {
     }
     for child in node.children(&mut node.walk()) {
         walk_php_symbols(child, source, out);
+    }
+}
+
+/// Extract Rust items. `struct`/`enum`/`trait`/`union` declarations are
+/// recorded as `class`; `function_item` (including methods inside `impl`
+/// blocks, which tree-sitter-rust also models as `function_item`) as `function`.
+fn walk_rust_symbols(node: Node, source: &[u8], out: &mut Vec<Symbol>) {
+    let sym_kind = match node.kind() {
+        "struct_item" | "enum_item" | "trait_item" | "union_item" => Some("class"),
+        "function_item" => Some("function"),
+        _ => None,
+    };
+    if let Some(sym_kind) = sym_kind {
+        if let Some(name_node) = node.child_by_field_name("name") {
+            if let Ok(name) = name_node.utf8_text(source) {
+                out.push(Symbol {
+                    name: name.to_string(),
+                    kind: sym_kind.into(),
+                    line_start: u32::try_from(node.start_position().row + 1).unwrap_or(0),
+                    line_end: u32::try_from(node.end_position().row + 1).unwrap_or(0),
+                    language: "rust".into(),
+                });
+            }
+        }
+    }
+    for child in node.children(&mut node.walk()) {
+        walk_rust_symbols(child, source, out);
+    }
+}
+
+/// Extract TypeScript / JavaScript declarations. `class`/`abstract class`/
+/// `interface`/`enum` declarations are recorded as `class`; `function`/
+/// generator declarations as `function`; `method_definition` as `method`.
+/// `lang` is `"typescript"` or `"javascript"`.
+fn walk_ts_symbols(node: Node, source: &[u8], out: &mut Vec<Symbol>, lang: &'static str) {
+    let sym_kind = match node.kind() {
+        "class_declaration"
+        | "abstract_class_declaration"
+        | "interface_declaration"
+        | "enum_declaration" => Some("class"),
+        "function_declaration" | "generator_function_declaration" => Some("function"),
+        "method_definition" => Some("method"),
+        _ => None,
+    };
+    if let Some(sym_kind) = sym_kind {
+        if let Some(name_node) = node.child_by_field_name("name") {
+            if let Ok(name) = name_node.utf8_text(source) {
+                out.push(Symbol {
+                    name: name.to_string(),
+                    kind: sym_kind.into(),
+                    line_start: u32::try_from(node.start_position().row + 1).unwrap_or(0),
+                    line_end: u32::try_from(node.end_position().row + 1).unwrap_or(0),
+                    language: lang.into(),
+                });
+            }
+        }
+    }
+    for child in node.children(&mut node.walk()) {
+        walk_ts_symbols(child, source, out, lang);
     }
 }
 
@@ -338,5 +408,62 @@ function topLevel() { return 2; }
         assert!(names.contains(&("T", "class")));
         assert!(names.contains(&("topLevel", "method")));
         assert!(syms.iter().all(|s| s.language == "php"));
+    }
+
+    #[test]
+    fn extracts_rust_items_and_functions() {
+        let dir = TempDir::new().unwrap();
+        let p = dir.path().join("lib.rs");
+        std::fs::write(
+            &p,
+            r#"
+pub struct Widget { n: u32 }
+pub enum Color { Red, Blue }
+pub trait Draw { fn draw(&self); }
+pub fn build() -> Widget { Widget { n: 0 } }
+impl Widget {
+    pub fn render(&self) -> u32 { self.n }
+}
+"#,
+        )
+        .unwrap();
+        let syms = extract_symbols(&p).unwrap();
+        let names: Vec<_> = syms
+            .iter()
+            .map(|s| (s.name.as_str(), s.kind.as_str()))
+            .collect();
+        assert!(names.contains(&("Widget", "class")));
+        assert!(names.contains(&("Color", "class")));
+        assert!(names.contains(&("Draw", "class")));
+        assert!(names.contains(&("build", "function")));
+        assert!(names.contains(&("render", "function"))); // method in impl
+        assert!(syms.iter().all(|s| s.language == "rust"));
+    }
+
+    #[test]
+    fn extracts_typescript_classes_and_functions() {
+        let dir = TempDir::new().unwrap();
+        let p = dir.path().join("app.ts");
+        std::fs::write(
+            &p,
+            r#"
+export function alpha(x: number): number { return x; }
+export class Beta {
+    gamma(): void {}
+}
+interface Svc { delta(): void; }
+"#,
+        )
+        .unwrap();
+        let syms = extract_symbols(&p).unwrap();
+        let names: Vec<_> = syms
+            .iter()
+            .map(|s| (s.name.as_str(), s.kind.as_str()))
+            .collect();
+        assert!(names.contains(&("alpha", "function")));
+        assert!(names.contains(&("Beta", "class")));
+        assert!(names.contains(&("gamma", "method")));
+        assert!(names.contains(&("Svc", "class")));
+        assert!(syms.iter().all(|s| s.language == "typescript"));
     }
 }

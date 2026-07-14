@@ -273,7 +273,9 @@ pub const PROFILE_SONNET: ModelProfile = ModelProfile {
     name: "sonnet",
     chain: &[
         ("anthropic", "claude-sonnet-4-6"),
-        ("openrouter", "anthropic/claude-sonnet-4-6"),
+        // OpenRouter uses dotted version ids (anthropic/claude-sonnet-4.6),
+        // not the hyphenated Anthropic-direct form.
+        ("openrouter", "anthropic/claude-sonnet-4.6"),
     ],
     cost_in_per_mtok: 3.0,
     cost_out_per_mtok: 15.0,
@@ -427,7 +429,8 @@ pub fn mirroring_tiers_for(gen_model: &str, tiers: &[(String, String)]) -> Vec<u
 /// `CloudInferenceProvider::from_env`'s order and documented defaults.
 pub(crate) fn detect_tier(get: impl Fn(&str) -> Option<String>) -> Option<(String, String)> {
     if get("OPENROUTER_API_KEY").is_some() {
-        let model = get("OPENROUTER_MODEL").unwrap_or_else(|| "anthropic/claude-sonnet-4-6".to_string());
+        // OpenRouter uses dotted version ids (…-4.6), not hyphenated (…-4-6).
+        let model = get("OPENROUTER_MODEL").unwrap_or_else(|| "anthropic/claude-sonnet-4.6".to_string());
         return Some(("openrouter".to_string(), model));
     }
     if get("OPENAI_API_KEY").is_some() {

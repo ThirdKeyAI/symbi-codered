@@ -39,6 +39,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Promoted `examples/guard_check.rs` from a throwaway to a tracked example.
 
 ### Fixed
+- **Symbol extraction now covers Rust and TypeScript/JavaScript** — `extract_symbols`
+  previously implemented only Python/Go/Java/PHP, so `symbol_index` was empty on
+  Rust/TS repos (dataflow worked, but pattern_scout lost symbol-based reasoning).
+- **`poc_forge` skips the sandbox loop when there are no reproducible-CWE
+  candidates** — an IaC-only repo previously burned 60 iterations / 374k input
+  tokens paging findings for nothing (a side effect of forcing `tool_choice: Any`).
+- **OpenRouter Sonnet model ID** corrected to the dotted form
+  (`anthropic/claude-sonnet-4.6`) in `detect_tier` and `PROFILE_SONNET`; the
+  hyphenated `-4-6` does not resolve on OpenRouter.
 - **`hypothesis_repl` verdict is now a native `emit_verdict` tool-call** instead
   of substring-matching free text — removes the negation-blind misparse
   ("not refuted… reproduced" → refuted) that could corrupt hypothesis-grounded

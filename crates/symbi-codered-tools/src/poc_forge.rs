@@ -91,6 +91,37 @@ pub struct PocSummary {
 ///
 /// Returns `Err` if [`CoderedOrga::new`] cannot find an LLM API key.
 pub async fn run(input: PocInput) -> Result<PocSummary> {
+    // No reproducible-CWE candidates (SQLi/cmdi/path/code/XSS with no poc_status
+    // yet)? Skip the whole ORGA loop. Otherwise tool_choice=Any forces the model
+    // to page findings until max_iterations for nothing — e.g. an IaC-only repo
+    // has zero sandbox-reproducible findings but still burned 60 iters + 374k
+    // input tokens in testing.
+    {
+        let conn = symbi_codered_core::db::init_db(
+            input
+                .db_path
+                .to_str()
+                .context("poc_forge db path is not valid UTF-8")?,
+        )
+        .context("opening db for poc_forge candidate pre-check")?;
+        let candidates =
+            symbi_codered_core::db::count_poc_candidates(&conn, input.engagement_id)
+                .context("counting poc candidates")?;
+        if candidates == 0 {
+            tracing::info!("poc_forge: no reproducible-CWE candidates; skipping the sandbox loop");
+            return Ok(PocSummary {
+                reproduced: 0,
+                refuted: 0,
+                inconclusive: 0,
+                scripts_run: 0,
+                tool_calls: 0,
+                tokens_in: 0,
+                tokens_out: 0,
+                iterations: 0,
+            });
+        }
+    }
+
     let executor = Arc::new(PocForgeExecutor::new(
         input.engagement_id,
         input.db_path,
@@ -312,5 +343,42 @@ mod tests {
             php_sandbox_container: "php-sandbox".to_string(),
             java_sandbox_container: "java-sandbox".to_string(),
         };
+    }
+
+    /// With no reproducible-CWE candidates, `run` must short-circuit before
+    /// building a CoderedOrga (so it needs no API key) and return an all-zero
+    /// summary — never entering the sandbox loop.
+    #[tokio::test]
+    async fn run_skips_loop_when_no_poc_candidates() {
+        use symbi_codered_core::db;
+        use symbi_evidence_schema::Engagement;
+
+        let dir = tempfile::TempDir::new().unwrap();
+        let db_path = dir.path().join("codered.db");
+        let conn = db::init_db(db_path.to_str().unwrap()).unwrap();
+        let e = Engagement::new("acme", "h", "2026-05-24", "2026-05-31");
+        let eid = e.id;
+        db::insert_engagement(&conn, &e).unwrap();
+        drop(conn); // no poc candidates inserted
+
+        let summary = super::run(PocInput {
+            engagement_id: eid,
+            db_path: db_path.clone(),
+            journal_path: dir.path().join("journal.jsonl"),
+            target_repo: dir.path().join("repo"),
+            sandbox_container: "python-sandbox".to_string(),
+            rust_sandbox_container: "rust-sandbox".to_string(),
+            typescript_sandbox_container: "typescript-sandbox".to_string(),
+            go_sandbox_container: "go-sandbox".to_string(),
+            php_sandbox_container: "php-sandbox".to_string(),
+            java_sandbox_container: "java-sandbox".to_string(),
+        })
+        .await
+        .expect("run should early-exit cleanly with no candidates");
+
+        assert_eq!(summary.iterations, 0);
+        assert_eq!(summary.reproduced + summary.refuted + summary.inconclusive, 0);
+        assert_eq!(summary.scripts_run, 0);
+        assert_eq!(summary.tokens_in, 0);
     }
 }
